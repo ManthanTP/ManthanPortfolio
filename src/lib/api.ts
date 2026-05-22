@@ -231,5 +231,20 @@ export const api = {
       const { error } = await supabase.storage.from(bucket).remove([filePath]);
       if (error) throw error;
     }
+  },
+
+  // Analytics
+  analytics: {
+    incrementVisit: async () => {
+      const { error } = await supabase.rpc('increment_page_visits');
+      if (error) throw error;
+      return true;
+    },
+    getVisitCount: async () => {
+      const { data, error } = await supabase.from('site_settings').select('value').eq('key', 'total_visitors').single();
+      // If error or not found, return 0
+      if (error || !data) return 0;
+      return parseInt(data.value || '0', 10);
+    }
   }
 };

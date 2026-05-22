@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './Navbar';
 import MobileNav from './MobileNav';
@@ -24,6 +25,13 @@ export default function Layout() {
   if (isAdmin) {
     return <Outlet />;
   }
+
+  const [visits, setVisits] = useState(0);
+  useEffect(() => {
+    import('../../lib/api').then(({ api }) => {
+      api.analytics.getVisitCount().then(setVisits).catch(() => {});
+    });
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
@@ -85,6 +93,14 @@ export default function Layout() {
           <Outlet />
         </motion.main>
       </AnimatePresence>
+      
+      {/* Global Footer */}
+      <footer style={{ padding: '40px 0 100px 0', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
+            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-cyan)', boxShadow: '0 0 10px var(--accent-cyan)' }} />
+            Total Visitors: <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{visits > 0 ? visits.toLocaleString() : '...'}</strong>
+         </div>
+      </footer>
       
       <MobileNav />
       {/* Mobile nav spacer */}

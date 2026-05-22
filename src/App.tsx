@@ -19,6 +19,14 @@ function App() {
 
   useEffect(() => {
     fetchSettings();
+    
+    // Analytics: Increment visit count once per session
+    if (!sessionStorage.getItem('mp_has_visited')) {
+      import('./lib/api').then(({ api }) => {
+        api.analytics.incrementVisit().catch(err => console.error('Analytics error:', err));
+      });
+      sessionStorage.setItem('mp_has_visited', 'true');
+    }
   }, [fetchSettings]);
 
   return (
