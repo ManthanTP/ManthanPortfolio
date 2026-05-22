@@ -5,7 +5,7 @@ import { useSettingsStore } from '../../stores/useSettingsStore';
 import type { Message } from '../../lib/supabase';
 
 export default function AdminDashboard() {
-  const [counts, setCounts] = useState({ visitors: 128, messages: 0, projects: 0 });
+  const [counts, setCounts] = useState({ visitors: 0, messages: 0, projects: 0 });
   const [recentMessages, setRecentMessages] = useState<Message[]>([]);
   const settings = useSettingsStore(s => s.settings);
 
@@ -14,10 +14,12 @@ export default function AdminDashboard() {
       try {
         const msgs = await api.messages.getAll();
         const projs = await api.projects.getAll();
+        const visitors = await api.analytics.getVisitCount();
         
         setRecentMessages(msgs.slice(0, 5));
         setCounts(prev => ({
           ...prev,
+          visitors: visitors,
           messages: msgs.length,
           projects: projs.length
         }));
@@ -29,7 +31,7 @@ export default function AdminDashboard() {
   }, []);
 
   const stats = [
-    { label: 'Visitors Today', value: counts.visitors.toString(), icon: '👥', color: '#6c63ff' },
+    { label: 'Total Visitors', value: counts.visitors.toString(), icon: '👥', color: '#6c63ff' },
     { label: 'Resume Downloads', value: settings.resume_downloads || '0', icon: '📄', color: '#00f5d4' },
     { label: 'Messages', value: counts.messages.toString(), icon: '✉️', color: '#f4a738' },
     { label: 'Total Projects', value: counts.projects.toString(), icon: '🚀', color: '#6c63ff' },
