@@ -119,7 +119,7 @@ export default function Projects() {
                         transition={{ duration: 0.6 }}
                       />
                       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.8), transparent)', pointerEvents: 'none' }} />
-                      
+
                       {project.featured && (
                         <div
                           className="font-accent"

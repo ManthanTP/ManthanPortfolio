@@ -76,7 +76,7 @@ export default function BlogPost() {
 
   const handleLike = async () => {
     if (!post) return;
-    
+
     // Optimistic UI update
     setLiked(true);
     setLikeCount((c) => c + 1);

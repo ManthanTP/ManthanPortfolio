@@ -45,7 +45,7 @@ export default function Skills() {
             </h2>
             <div style={{ height: 1, width: 40, background: 'var(--accent-violet)' }} />
           </div>
-          
+
           <h1 className="font-hero" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 800 }}>
             Tools & Technologies I <span style={{ color: 'var(--accent-violet)' }}>Master</span>
           </h1>
@@ -59,32 +59,32 @@ export default function Skills() {
           <div className="skills-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {categories.map((cat, i) => (
               <ScrollReveal key={cat} delay={i * 0.1}>
-                <motion.div 
+                <motion.div
                   whileHover={{ y: -10 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                   className="glass-card"
-                  style={{ 
-                    borderRadius: 16, 
+                  style={{
+                    borderRadius: 16,
                     padding: 32,
                     height: '100%',
                     position: 'relative',
                     overflow: 'hidden',
                     borderTop: '2px solid rgba(108, 99, 255, 0.3)'
                   }}>
-                  
+
                   {/* Subtle inner glow */}
                   <div style={{ position: 'absolute', top: -50, right: -50, width: 150, height: 150, background: 'radial-gradient(circle, rgba(108, 99, 255, 0.1) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
 
                   {/* Category Icon */}
-                  <motion.div 
+                  <motion.div
                     whileHover={{ rotate: 10, scale: 1.1 }}
-                    style={{ 
-                      width: 56, 
-                      height: 56, 
-                      borderRadius: 16, 
-                      background: 'rgba(108, 99, 255, 0.1)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 16,
+                      background: 'rgba(108, 99, 255, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'center',
                       color: 'var(--accent-violet)',
                       marginBottom: 24,
@@ -101,7 +101,7 @@ export default function Skills() {
                   {/* Skills Pills */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                     {skills.filter(s => s.category === cat).map(skill => (
-                      <motion.div 
+                      <motion.div
                         key={skill.id}
                         whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 245, 212, 0.15)', borderColor: 'rgba(0, 245, 212, 0.5)', color: 'var(--accent-cyan)' }}
                         style={{

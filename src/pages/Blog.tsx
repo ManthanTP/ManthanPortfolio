@@ -116,7 +116,7 @@ export default function Blog() {
             >
               <Link to={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
                 <div className="glass-card" style={{ overflow: 'hidden', cursor: 'pointer', height: '100%', position: 'relative', borderTop: '2px solid rgba(0, 245, 212, 0.3)' }}>
-                  
+
                   {/* Subtle inner glow */}
                   <div style={{ position: 'absolute', top: -50, right: -50, width: 150, height: 150, background: 'radial-gradient(circle, rgba(0, 245, 212, 0.1) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
 
@@ -124,11 +124,11 @@ export default function Blog() {
                   <div style={{ position: 'absolute', top: 0, left: 0, width: '30%', height: 2, background: 'var(--accent-cyan)', boxShadow: '0 0 10px var(--accent-cyan)', zIndex: 2 }} />
 
                   <div style={{ position: 'relative', overflow: 'hidden', zIndex: 1 }}>
-                    <motion.img 
-                      src={post.cover_url || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800'} 
-                      alt={post.title} 
-                      loading="lazy" 
-                      style={{ width: '100%', height: 180, objectFit: 'cover' }} 
+                    <motion.img
+                      src={post.cover_url || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800'}
+                      alt={post.title}
+                      loading="lazy"
+                      style={{ width: '100%', height: 180, objectFit: 'cover' }}
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.4 }}
                     />

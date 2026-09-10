@@ -30,7 +30,7 @@ export default function Resume() {
     setDownloadCount(newCount);
     try {
       await api.settings.update('resume_downloads', newCount.toString());
-    } catch(e) { console.error('Failed to update count'); }
+    } catch (e) { console.error('Failed to update count'); }
     window.open(resumeUrl, '_blank');
   };
 
@@ -104,7 +104,7 @@ export default function Resume() {
               style={{ padding: 24, textAlign: 'center', position: 'relative', overflow: 'hidden', borderTop: '2px solid rgba(108, 99, 255, 0.3)' }}
             >
               <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, background: 'radial-gradient(circle, rgba(108, 99, 255, 0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-              <motion.div 
+              <motion.div
                 whileHover={{ rotate: 15, scale: 1.2 }}
                 style={{ fontSize: '2rem', marginBottom: 12, display: 'inline-block' }}
               >
@@ -123,10 +123,10 @@ export default function Resume() {
         </h2>
         <div style={{ maxWidth: 700, margin: '0 auto' }}>
           {experience.slice(0, 3).map((exp) => (
-            <motion.div 
-              key={exp.id} 
+            <motion.div
+              key={exp.id}
               whileHover={{ x: 10, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(0, 245, 212, 0.3)' }}
-              className="glass-card" 
+              className="glass-card"
               style={{ padding: '24px 32px', marginBottom: 16, borderLeft: '4px solid var(--accent-cyan)' }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>

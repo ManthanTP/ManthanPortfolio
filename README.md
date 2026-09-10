@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# Manthan TP - Portfolio & Interactive Tech Hub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, high-performance portfolio and blog platform built with React, TypeScript, Vite, and Supabase.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Dynamic & Responsive UI**: Glassmorphic aesthetic, animated skill radar, dark/light theme, timeline views.
+- **Offline & Backend Fallback**: Built-in static fallback data — if Supabase backend is unreachable, the site automatically serves cached and pre-bundled data without breaking.
+- **Admin Dashboard**: Secure management for projects, blog posts, skills, certificates, messages, and settings.
+- **Interactive Tech Playground**: Live interactive components, code demos, and visitor engagement features.
+- **Supabase Keep-Alive Cron**: Automated GitHub Action preventing free-tier database inactivity sleep.
 
-## React Compiler
+## 🚀 Supabase Keep-Alive (Prevent Inactivity Shutdown)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Supabase free-tier projects pause after 7 days without database/API activity. This repository includes an automated GitHub Action:
 
-## Expanding the ESLint configuration
+- **Workflow File**: [`.github/workflows/keep-supabase-alive.yml`](.github/workflows/keep-supabase-alive.yml)
+- **Schedule**: Automatically runs every 3 days at 06:00 UTC via curl request to PostgREST.
+- **Manual Trigger**: Can also be run manually from the **Actions** tab on GitHub (`workflow_dispatch`).
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Optional GitHub Secrets
+If you want to configure secrets in your GitHub repository:
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_KEY`: Your Supabase anon/publishable key
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+*(Fallback values are already configured in the workflow if secrets are not set).*
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Alternative: Free External Cron (e.g. UptimeRobot / Cron-Job.org)
+You can also point a free monitoring service like [UptimeRobot](https://uptimerobot.com/) or [cron-job.org](https://cron-job.org/) to:
+```
+https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/rest/v1/
+```
+with headers:
+- `apikey`: `<YOUR_ANON_KEY>`
+- `Authorization`: `Bearer <YOUR_ANON_KEY>`
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 🛠️ Development & Deployment
+
+### Local Development
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Production Build
+```bash
+npm run build
 ```
+

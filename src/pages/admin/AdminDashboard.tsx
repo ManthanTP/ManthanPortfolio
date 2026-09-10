@@ -15,7 +15,7 @@ export default function AdminDashboard() {
         const msgs = await api.messages.getAll();
         const projs = await api.projects.getAll();
         const visitors = await api.analytics.getVisitCount();
-        
+
         setRecentMessages(msgs.slice(0, 5));
         setCounts(prev => ({
           ...prev,
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
           messages: msgs.length,
           projects: projs.length
         }));
-      } catch(e) {
+      } catch (e) {
         console.error('Failed to fetch dashboard data', e);
       }
     };

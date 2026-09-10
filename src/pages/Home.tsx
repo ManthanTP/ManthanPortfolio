@@ -65,7 +65,7 @@ export default function Home() {
           api.skills.getAll(),
           api.experience.getAll()
         ]);
-        
+
         setStats([
           { label: 'Projects', value: projects.length, suffix: '' },
           { label: 'Posts', value: posts.length, suffix: '' },
@@ -96,245 +96,245 @@ export default function Home() {
   return (
     <div style={{ position: 'relative', overflowX: 'hidden' }}>
       <div id="home" style={{ position: 'relative', minHeight: '100vh', overflow: 'hidden' }}>
-      <ParticleBackground count={300} color="rgba(108,99,255,0.3)" />
+        <ParticleBackground count={300} color="rgba(108,99,255,0.3)" />
 
-      {/* Gradient mesh background */}
-      <div
-        style={{
-          position: 'absolute',
-          top: -200,
-          right: -200,
-          width: 600,
-          height: 600,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(108,99,255,0.08) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: -100,
-          left: -100,
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0,245,212,0.05) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          pointerEvents: 'none',
-        }}
-      />
+        {/* Gradient mesh background */}
+        <div
+          style={{
+            position: 'absolute',
+            top: -200,
+            right: -200,
+            width: 600,
+            height: 600,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(108,99,255,0.08) 0%, transparent 70%)',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: -100,
+            left: -100,
+            width: 400,
+            height: 400,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0,245,212,0.05) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+            pointerEvents: 'none',
+          }}
+        />
 
 
 
-      <div className="section-container" style={{ paddingTop: 180, position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
-          {/* Desktop: side by side layout */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 40,
-              width: '100%',
-            }}
-            className="home-hero-grid"
-          >
-            {/* Text Content */}
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              animate="visible"
+        <div className="section-container" style={{ paddingTop: 180, position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32 }}>
+            {/* Desktop: side by side layout */}
+            <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 20,
-                textAlign: 'center',
-                maxWidth: 700,
+                gap: 40,
+                width: '100%',
               }}
-              className="home-text-content"
+              className="home-hero-grid"
             >
-              {/* Profile Image */}
-              <motion.div variants={fadeUp}>
-                <motion.div
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{
-                    width: 140,
-                    height: 140,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #6c63ff, #00f5d4)',
-                    padding: 3,
-                    position: 'relative',
-                  }}
-                >
-                  <div
+              {/* Text Content */}
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                animate="visible"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 20,
+                  textAlign: 'center',
+                  maxWidth: 700,
+                }}
+                className="home-text-content"
+              >
+                {/* Profile Image */}
+                <motion.div variants={fadeUp}>
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: 140,
+                      height: 140,
                       borderRadius: '50%',
-                      background: 'var(--bg-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden',
+                      background: 'linear-gradient(135deg, #6c63ff, #00f5d4)',
+                      padding: 3,
+                      position: 'relative',
                     }}
                   >
-                    {settings.profile_image_url ? (
-                      <img src={settings.profile_image_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <span className="font-accent" style={{ fontSize: '2.8rem', color: 'var(--accent-violet)' }}>
-                        M
-                      </span>
-                    )}
-                  </div>
-                  {/* Glow ring */}
-                  <div
-                    className="animate-glow"
-                    style={{
-                      position: 'absolute',
-                      inset: -6,
-                      borderRadius: '50%',
-                      border: '2px solid rgba(108,99,255,0.3)',
-                      pointerEvents: 'none',
-                    }}
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        background: 'var(--bg-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {settings.profile_image_url ? (
+                        <img src={settings.profile_image_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span className="font-accent" style={{ fontSize: '2.8rem', color: 'var(--accent-violet)' }}>
+                          M
+                        </span>
+                      )}
+                    </div>
+                    {/* Glow ring */}
+                    <div
+                      className="animate-glow"
+                      style={{
+                        position: 'absolute',
+                        inset: -6,
+                        borderRadius: '50%',
+                        border: '2px solid rgba(108,99,255,0.3)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  </motion.div>
+                </motion.div>
+
+                {/* Name */}
+                <motion.h1
+                  variants={fadeUp}
+                  className="font-hero"
+                  style={{
+                    fontSize: 'clamp(2rem, 6vw, 3.8rem)',
+                    fontWeight: 800,
+                    lineHeight: 1.1,
+                    background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-violet) 50%, var(--accent-cyan) 100%)',
+                    backgroundSize: '200% 200%',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    animation: 'gradient-shift 6s ease infinite',
+                  }}
+                >
+                  Manthan Patel
+                </motion.h1>
+
+                {/* Typewriter subtitle */}
+                <motion.div variants={fadeUp} style={{ height: 32, display: 'flex', alignItems: 'center' }}>
+                  <TypewriterText
+                    texts={SUBTITLES}
+                    className="font-heading"
+                    speed={50}
+                    deleteSpeed={25}
+                    pauseDuration={2500}
                   />
                 </motion.div>
-              </motion.div>
 
-              {/* Name */}
-              <motion.h1
-                variants={fadeUp}
-                className="font-hero"
+                {/* CTA Buttons */}
+                <motion.div variants={fadeUp} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <a href="#projects" className="btn-primary" style={{ textDecoration: 'none' }}>
+                    <IconExternalLink size={16} /> View Projects
+                  </a>
+                  {settings.show_resume_section !== 'false' && (
+                    <a href="#resume" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                      <IconDownload size={16} /> Download Resume
+                    </a>
+                  )}
+                </motion.div>
+
+                {/* Status Pill */}
+                <motion.div variants={fadeUp}>
+                  <div className="status-pill">
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00f5d4', display: 'inline-block', animation: 'glow-pulse 2s ease-in-out infinite' }} />
+                    Currently Building: Smart Campus AI Platform
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Stats Grid */}
+            <ScrollReveal>
+              <div
                 style={{
-                  fontSize: 'clamp(2rem, 6vw, 3.8rem)',
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-violet) 50%, var(--accent-cyan) 100%)',
-                  backgroundSize: '200% 200%',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  animation: 'gradient-shift 6s ease infinite',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 16,
+                  width: '100%',
+                  maxWidth: 600,
                 }}
+                className="stats-grid"
               >
-                Manthan Patel
-              </motion.h1>
-
-              {/* Typewriter subtitle */}
-              <motion.div variants={fadeUp} style={{ height: 32, display: 'flex', alignItems: 'center' }}>
-                <TypewriterText
-                  texts={SUBTITLES}
-                  className="font-heading"
-                  speed={50}
-                  deleteSpeed={25}
-                  pauseDuration={2500}
-                />
-              </motion.div>
-
-              {/* CTA Buttons */}
-              <motion.div variants={fadeUp} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <a href="#projects" className="btn-primary" style={{ textDecoration: 'none' }}>
-                  <IconExternalLink size={16} /> View Projects
-                </a>
-                {settings.show_resume_section !== 'false' && (
-                  <a href="#resume" className="btn-secondary" style={{ textDecoration: 'none' }}>
-                    <IconDownload size={16} /> Download Resume
-                  </a>
-                )}
-              </motion.div>
-
-              {/* Status Pill */}
-              <motion.div variants={fadeUp}>
-                <div className="status-pill">
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00f5d4', display: 'inline-block', animation: 'glow-pulse 2s ease-in-out infinite' }} />
-                  Currently Building: Smart Campus AI Platform
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-
-          {/* Stats Grid */}
-          <ScrollReveal>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 16,
-                width: '100%',
-                maxWidth: 600,
-              }}
-              className="stats-grid"
-            >
-              {stats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="glass-card"
-                  style={{
-                    padding: '20px 16px',
-                    textAlign: 'center',
-                  }}
-                >
-                  <div className="font-accent" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-violet)' }}>
-                    <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                  </div>
-                  <div className="font-heading" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4 }}>
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScrollReveal>
-
-          {/* Social Icons */}
-          <ScrollReveal delay={0.2}>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-              {dynamicSocialLinks.map((link) => {
-                const Icon = socialIconMap[link.icon];
-                return (
-                  <a
-                    key={link.name}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {stats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="glass-card"
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      border: '1px solid var(--border-color)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      textDecoration: 'none',
-                      transition: 'all 0.3s',
+                      padding: '20px 16px',
+                      textAlign: 'center',
                     }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = link.color;
-                      (e.currentTarget as HTMLElement).style.color = link.color;
-                      (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${link.color}33`;
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-color)';
-                      (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
-                      (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                      (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                    }}
-                    aria-label={link.name}
                   >
-                    {Icon && <Icon size={20} />}
-                  </a>
-                );
-              })}
-            </div>
-          </ScrollReveal>
+                    <div className="font-accent" style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--accent-violet)' }}>
+                      <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+                    </div>
+                    <div className="font-heading" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4 }}>
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollReveal>
+
+            {/* Social Icons */}
+            <ScrollReveal delay={0.2}>
+              <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+                {dynamicSocialLinks.map((link) => {
+                  const Icon = socialIconMap[link.icon];
+                  return (
+                    <a
+                      key={link.name}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        border: '1px solid var(--border-color)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-secondary)',
+                        textDecoration: 'none',
+                        transition: 'all 0.3s',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.borderColor = link.color;
+                        (e.currentTarget as HTMLElement).style.color = link.color;
+                        (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
+                        (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 20px ${link.color}33`;
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-color)';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+                        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                      }}
+                      aria-label={link.name}
+                    >
+                      {Icon && <Icon size={20} />}
+                    </a>
+                  );
+                })}
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div id="about"><About /></div>
+      <div id="about"><About /></div>
       <div id="projects"><Projects /></div>
       <div id="skills"><Skills /></div>
       <div id="experience"><Experience /></div>

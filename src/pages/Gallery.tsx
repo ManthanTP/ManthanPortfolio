@@ -33,7 +33,7 @@ export default function Gallery() {
   }, [activeFilter, items]);
 
   const closeLightbox = () => setLightboxState(null);
-  
+
   const prev = () => {
     setLightboxState((current) => {
       if (!current) return null;
@@ -101,46 +101,46 @@ export default function Gallery() {
         ) : (
           <AnimatePresence mode="popLayout">
             {filtered.map((item, i) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3, delay: i * 0.05 }}
-              style={{
-                breakInside: 'avoid',
-                marginBottom: 16,
-                cursor: 'pointer',
-                borderRadius: 12,
-                overflow: 'hidden',
-                border: '1px solid var(--glass-border)',
-                transition: 'transform 0.3s, box-shadow 0.3s',
-              }}
-              onClick={() => setLightboxState({ itemIndex: i, imageIndex: 0 })}
-              whileHover={{ y: -4, boxShadow: '0 8px 30px rgba(108,99,255,0.15)' }}
-            >
-              <div style={{ position: 'relative' }}>
-                {(() => {
-                  const firstUrl = (item.image_url || '').split(',')[0] || '';
-                  const isVid = /\.(mp4|webm|ogg)$/i.test(firstUrl.split('?')[0]);
-                  return isVid ? (
-                    <video src={firstUrl} style={{ width: '100%', height: 'auto', display: 'block' }} muted loop playsInline />
-                  ) : (
-                    <img src={firstUrl} alt={item.title} loading="lazy" style={{ width: '100%', height: 'auto', display: 'block' }} />
-                  );
-                })()}
-                {item.image_url && item.image_url.split(',').length > 1 && (
-                  <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '2px 8px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 600 }}>
-                    1 / {item.image_url.split(',').filter(Boolean).length}
-                  </div>
-                )}
-              </div>
-              <div style={{ padding: '10px 12px', background: 'var(--bg-secondary)' }}>
-                <p className="font-heading" style={{ fontSize: '0.8rem', fontWeight: 500 }}>{item.title}</p>
-                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.category}</p>
-              </div>
-            </motion.div>
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+                style={{
+                  breakInside: 'avoid',
+                  marginBottom: 16,
+                  cursor: 'pointer',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  border: '1px solid var(--glass-border)',
+                  transition: 'transform 0.3s, box-shadow 0.3s',
+                }}
+                onClick={() => setLightboxState({ itemIndex: i, imageIndex: 0 })}
+                whileHover={{ y: -4, boxShadow: '0 8px 30px rgba(108,99,255,0.15)' }}
+              >
+                <div style={{ position: 'relative' }}>
+                  {(() => {
+                    const firstUrl = (item.image_url || '').split(',')[0] || '';
+                    const isVid = /\.(mp4|webm|ogg)$/i.test(firstUrl.split('?')[0]);
+                    return isVid ? (
+                      <video src={firstUrl} style={{ width: '100%', height: 'auto', display: 'block' }} muted loop playsInline />
+                    ) : (
+                      <img src={firstUrl} alt={item.title} loading="lazy" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                    );
+                  })()}
+                  {item.image_url && item.image_url.split(',').length > 1 && (
+                    <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '2px 8px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 600 }}>
+                      1 / {item.image_url.split(',').filter(Boolean).length}
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: '10px 12px', background: 'var(--bg-secondary)' }}>
+                  <p className="font-heading" style={{ fontSize: '0.8rem', fontWeight: 500 }}>{item.title}</p>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.category}</p>
+                </div>
+              </motion.div>
             ))}
           </AnimatePresence>
         )}
@@ -159,13 +159,13 @@ export default function Gallery() {
             <button onClick={(e) => { e.stopPropagation(); prev(); }} style={{ position: 'absolute', left: 20, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: 44, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', zIndex: 10 }}>
               <IconChevronLeft size={24} />
             </button>
-            
+
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               {(() => {
                 const currentUrl = (filtered[lightboxState.itemIndex].image_url || '').split(',').filter(Boolean)[lightboxState.imageIndex];
                 const isVid = /\.(mp4|webm|ogg)$/i.test((currentUrl || '').split('?')[0]);
                 const key = `${lightboxState.itemIndex}-${lightboxState.imageIndex}`;
-                
+
                 return isVid ? (
                   <motion.video
                     key={key}
@@ -190,13 +190,13 @@ export default function Gallery() {
                   />
                 );
               })()}
-              
+
               <div style={{ marginTop: 16, display: 'flex', gap: 6, justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
                 {(filtered[lightboxState.itemIndex].image_url || '').split(',').filter(Boolean).map((_, i) => (
                   <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === lightboxState.imageIndex ? '#fff' : 'rgba(255,255,255,0.3)', transition: 'background 0.3s' }} />
                 ))}
               </div>
-              
+
               <div style={{ marginTop: 12, textAlign: 'center', color: '#fff' }}>
                 <p className="font-heading" style={{ fontSize: '1rem', fontWeight: 600 }}>{filtered[lightboxState.itemIndex].title}</p>
               </div>

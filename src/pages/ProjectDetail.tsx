@@ -122,23 +122,23 @@ export default function ProjectDetail() {
           <div className="glass-card" style={{ padding: 32, marginBottom: 40 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {(project.features && project.features.length > 0 ? project.features : [
-                'Real-time data processing and visualization', 
-                'AI-powered analytics and predictions', 
-                'Mobile-responsive dashboard interface', 
-                'Secure authentication and role-based access', 
+                'Real-time data processing and visualization',
+                'AI-powered analytics and predictions',
+                'Mobile-responsive dashboard interface',
+                'Secure authentication and role-based access',
                 'REST API integration with third-party services'
               ]).map((line, i) => {
                 const text = line.trim();
-                
+
                 // Handle Headings (e.g., # Heading or ## Heading)
                 if (text.startsWith('#')) {
                   const headingText = text.replace(/^#+\s*/, '');
                   const isMainHeading = text.startsWith('# ');
                   return (
                     <div key={i} style={{ marginTop: i > 0 ? 24 : 0, marginBottom: 8 }}>
-                      <h3 className="font-heading" style={{ 
-                        fontSize: isMainHeading ? '1.4rem' : '1.1rem', 
-                        fontWeight: 700, 
+                      <h3 className="font-heading" style={{
+                        fontSize: isMainHeading ? '1.4rem' : '1.1rem',
+                        fontWeight: 700,
                         color: isMainHeading ? 'var(--accent-violet)' : 'var(--text-primary)',
                         letterSpacing: '0.5px'
                       }}>
@@ -148,16 +148,16 @@ export default function ProjectDetail() {
                     </div>
                   );
                 }
-                
+
                 // Handle Horizontal Rule
                 if (text === '---') {
                   return <div key={i} style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1) 50%, transparent)', margin: '16px 0' }} />;
                 }
-                
+
                 // Handle Bullet Points
                 const isBullet = text.startsWith('-');
                 const itemText = isBullet ? text.replace(/^-\s*/, '') : text;
-                
+
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, color: 'var(--text-secondary)', fontSize: '0.95rem', paddingLeft: isBullet ? 16 : 0, lineHeight: 1.6 }}>
                     <span style={{ color: 'var(--accent-cyan)', fontSize: '1.1rem', flexShrink: 0, marginTop: -2 }}>→</span>

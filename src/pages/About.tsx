@@ -23,9 +23,9 @@ export default function About() {
       if (statsSetting) {
         try {
           setStats(JSON.parse(statsSetting.value));
-        } catch(e) { console.error('Failed to parse about stats'); }
+        } catch (e) { console.error('Failed to parse about stats'); }
       }
-      
+
       const textSetting = data.find(s => s.key === 'about_text');
       if (textSetting) {
         setAboutText(textSetting.value);
@@ -49,9 +49,9 @@ export default function About() {
 
       {/* Profile Card + Story */}
       <ScrollReveal>
-        <motion.div 
+        <motion.div
           whileHover={{ y: -5 }}
-          className="glass-card" 
+          className="glass-card"
           style={{ padding: '40px 32px', maxWidth: 800, margin: '0 auto 60px', position: 'relative', overflow: 'hidden', borderTop: '2px solid rgba(108, 99, 255, 0.3)' }}
         >
           {/* Subtle gradient blob inside card */}
@@ -167,9 +167,9 @@ export default function About() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, maxWidth: 600, margin: '0 auto' }} className="about-stats-grid">
         {stats.map((stat, i) => (
           <ScrollReveal key={stat.label} delay={i * 0.1}>
-            <motion.div 
+            <motion.div
               whileHover={{ y: -5, scale: 1.05 }}
-              className="glass-card" 
+              className="glass-card"
               style={{ padding: 32, textAlign: 'center', borderTop: '2px solid rgba(108, 99, 255, 0.3)', position: 'relative', overflow: 'hidden' }}
             >
               <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '60%', height: 60, background: 'radial-gradient(circle, rgba(108, 99, 255, 0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />

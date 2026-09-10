@@ -9,11 +9,11 @@ export default function Experience() {
   const [experience, setExperience] = useState<ExperienceType[]>([]);
   const [loading, setLoading] = useState(true);
   const settings = useSettingsStore(s => s.settings);
-  
+
   const achievements = (() => {
     try {
       return JSON.parse(settings.achievements || '[]');
-    } catch(e) {
+    } catch (e) {
       return [];
     }
   })();
@@ -46,7 +46,7 @@ export default function Experience() {
 
       {/* Timeline */}
       <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto 120px' }} className="exp-timeline">
-        <motion.div 
+        <motion.div
           className="timeline-line-anim"
           initial={{ height: 0 }}
           whileInView={{ height: '100%' }}
@@ -63,32 +63,32 @@ export default function Experience() {
             boxShadow: '0 0 15px rgba(108, 99, 255, 0.5)'
           }}
         />
-        
+
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading experience...</p>
         ) : (
           experience.filter(e => e.type !== 'achievement').map((exp, i) => (
             <div key={exp.id} style={{ position: 'relative', paddingBottom: 80, width: '100%' }} className="exp-timeline-item">
-              <motion.div 
+              <motion.div
                 className="timeline-dot-anim"
                 initial={{ scale: 0, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.4, delay: 0.2 }}
-                style={{ 
-                  position: 'absolute', 
-                  left: 22, 
-                  top: 32, 
-                  width: 20, 
-                  height: 20, 
-                  borderRadius: '50%', 
-                  background: 'var(--bg-primary)', 
+                style={{
+                  position: 'absolute',
+                  left: 22,
+                  top: 32,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'var(--bg-primary)',
                   border: '4px solid var(--accent-violet)',
                   boxShadow: '0 0 20px rgba(108, 99, 255, 0.8)',
-                  zIndex: 2 
-                }} 
+                  zIndex: 2
+                }}
               />
-              
+
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -96,7 +96,7 @@ export default function Experience() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 whileHover={{ scale: 1.02, y: -5 }}
                 className="glass-card exp-card"
-                style={{ 
+                style={{
                   position: 'relative'
                 }}
               >
@@ -108,7 +108,7 @@ export default function Experience() {
                     {exp.start_date} — {exp.end_date || 'Present'}
                   </span>
                   {!exp.end_date && (
-                    <motion.span 
+                    <motion.span
                       animate={{ opacity: [1, 0.5, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                       style={{ fontSize: '0.75rem', background: 'rgba(0, 245, 212, 0.15)', color: 'var(--accent-cyan)', padding: '6px 12px', borderRadius: 20, fontFamily: 'var(--font-accent)', fontWeight: 700, border: '1px solid rgba(0, 245, 212, 0.3)' }}
@@ -117,11 +117,11 @@ export default function Experience() {
                     </motion.span>
                   )}
                 </div>
-                
+
                 <h3 className="font-heading" style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 6 }}>
                   {exp.title} <span style={{ color: 'var(--accent-cyan)' }}>@ {exp.org}</span>
                 </h3>
-                
+
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: 20 }}>
                   {exp.description}
                 </p>
@@ -164,9 +164,9 @@ export default function Experience() {
             <motion.div
               whileHover={{ scale: 1.05, translateY: -10 }}
               className="glass-card achievement-card"
-              style={{ 
-                padding: 32, 
-                textAlign: 'center', 
+              style={{
+                padding: 32,
+                textAlign: 'center',
                 cursor: 'default',
                 position: 'relative',
                 overflow: 'hidden',
