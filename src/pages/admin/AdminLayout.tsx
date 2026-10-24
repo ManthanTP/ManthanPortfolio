@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { IconHome, IconFolder, IconPen, IconImage, IconFile, IconSend, IconCode, IconBriefcase, IconTrophy } from '../../components/ui/Icons';
 import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 
 const SIDEBAR_ITEMS = [
   { path: '/admin', label: 'Overview', Icon: IconHome },
@@ -19,6 +20,13 @@ const SIDEBAR_ITEMS = [
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    api.messages.getAll().then((msgs) => {
+      setUnreadCount(msgs.filter((m) => !m.read).length);
+    }).catch(() => {});
+  }, [location.pathname]);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -50,8 +58,24 @@ export default function AdminLayout() {
         {SIDEBAR_ITEMS.map(({ path, label, Icon }) => {
           const isActive = location.pathname === path;
           return (
-            <Link key={path} to={path} className={isActive ? 'active' : ''}>
-              <Icon size={18} /> {label}
+            <Link key={path} to={path} className={isActive ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Icon size={18} />
+              <span>{label}</span>
+              {path === '/admin/messages' && unreadCount > 0 && (
+                <span
+                  style={{
+                    marginLeft: 'auto',
+                    background: 'var(--accent-violet)',
+                    color: '#fff',
+                    borderRadius: 10,
+                    padding: '2px 7px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
             </Link>
           );
         })}

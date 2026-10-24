@@ -11,9 +11,16 @@ export function ProjectsManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   
   // Basic form state
-  type ProjectFormData = Partial<Project> & { techStackRaw?: string, imagesRaw?: string, featuresRaw?: string };
+  type ProjectFormData = Partial<Project> & {
+    tagline?: string;
+    role?: string;
+    problem?: string;
+    techStackRaw?: string;
+    imagesRaw?: string;
+    featuresRaw?: string;
+  };
   const [formData, setFormData] = useState<ProjectFormData>({
-    title: '', slug: '', description: '', visible: true, featured: false, order_index: 0
+    title: '', slug: '', description: '', visible: true, featured: false, order_index: 0, tagline: '', role: '', problem: ''
   });
 
   const loadProjects = async () => {
@@ -41,11 +48,29 @@ export function ProjectsManager() {
         await api.projects.create(dataToSave as Omit<Project, 'id' | 'created_at' | 'updated_at'>);
       }
       setEditingId(null);
-      setFormData({ title: '', slug: '', description: '', visible: true, featured: false, order_index: 0, techStackRaw: undefined, imagesRaw: undefined, featuresRaw: undefined });
+      setFormData({ title: '', slug: '', description: '', visible: true, featured: false, order_index: 0, tagline: '', role: '', problem: '', techStackRaw: undefined, imagesRaw: undefined, featuresRaw: undefined });
       loadProjects();
     } catch (err) {
       console.error(err);
       alert('Error saving project');
+    }
+  };
+
+  const moveProject = async (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= projects.length) return;
+    const p1 = projects[index];
+    const p2 = projects[targetIndex];
+    const order1 = p1.order_index ?? index;
+    const order2 = p2.order_index ?? targetIndex;
+    const newOrder1 = order2 === order1 ? (direction === 'up' ? order1 - 1 : order1 + 1) : order2;
+    const newOrder2 = order1;
+    try {
+      await api.projects.update(p1.id, { order_index: newOrder1 });
+      await api.projects.update(p2.id, { order_index: newOrder2 });
+      loadProjects();
+    } catch (err) {
+      console.error('Failed to reorder projects', err);
     }
   };
 
@@ -80,6 +105,10 @@ export function ProjectsManager() {
           <input placeholder="Title" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} className="admin-input" />
           <input placeholder="Slug (e.g. smart-campus)" value={formData.slug || ''} onChange={e => setFormData({...formData, slug: e.target.value})} className="admin-input" />
           
+          <input placeholder="Tagline (e.g. Multi-agent automation system)" value={formData.tagline || ''} onChange={e => setFormData({...formData, tagline: e.target.value})} className="admin-input" style={{ gridColumn: 'span 2' }} />
+          <input placeholder="Role (e.g. Full Stack Architect)" value={formData.role || ''} onChange={e => setFormData({...formData, role: e.target.value})} className="admin-input" />
+          <input placeholder="Problem (e.g. High latency in distributed AI queries)" value={formData.problem || ''} onChange={e => setFormData({...formData, problem: e.target.value})} className="admin-input" />
+
           <input placeholder="GitHub URL" value={formData.github_url || ''} onChange={e => setFormData({...formData, github_url: e.target.value})} className="admin-input" />
           <input placeholder="Live Demo URL" value={formData.live_url || ''} onChange={e => setFormData({...formData, live_url: e.target.value})} className="admin-input" />
           
@@ -218,7 +247,7 @@ export function ProjectsManager() {
                   </td>
                 </tr>
               ) : (
-                projects.map((p) => (
+                projects.map((p, i) => (
                   <tr key={p.id}>
                     <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)', fontSize: '0.9rem' }}>{p.title}</td>
                     <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>
@@ -226,8 +255,44 @@ export function ProjectsManager() {
                       {p.featured && <span style={{ marginLeft: 8 }}>⭐</span>}
                     </td>
                     <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>
-                      <button onClick={() => startEdit(p)} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 10px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', marginRight: 6 }}>Edit</button>
-                      <button onClick={() => handleDelete(p.id)} style={{ background: 'transparent', border: '1px solid #ff4444', borderRadius: 6, padding: '4px 10px', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Delete</button>
+                      <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                        <button
+                          disabled={i === 0}
+                          onClick={() => moveProject(i, 'up')}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 4,
+                            padding: '3px 8px',
+                            color: i === 0 ? 'var(--text-secondary)' : 'var(--text-primary)',
+                            opacity: i === 0 ? 0.4 : 1,
+                            cursor: i === 0 ? 'not-allowed' : 'pointer',
+                            fontSize: '0.75rem',
+                          }}
+                          title="Move Up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          disabled={i === projects.length - 1}
+                          onClick={() => moveProject(i, 'down')}
+                          style={{
+                            background: 'transparent',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: 4,
+                            padding: '3px 8px',
+                            color: i === projects.length - 1 ? 'var(--text-secondary)' : 'var(--text-primary)',
+                            opacity: i === projects.length - 1 ? 0.4 : 1,
+                            cursor: i === projects.length - 1 ? 'not-allowed' : 'pointer',
+                            fontSize: '0.75rem',
+                          }}
+                          title="Move Down"
+                        >
+                          ↓
+                        </button>
+                        <button onClick={() => startEdit(p)} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 10px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem' }}>Edit</button>
+                        <button onClick={() => handleDelete(p.id)} style={{ background: 'transparent', border: '1px solid #ff4444', borderRadius: 6, padding: '4px 10px', color: '#ff4444', cursor: 'pointer', fontSize: '0.75rem' }}>Delete</button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -824,7 +889,22 @@ export function MessagesManager() {
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{msg.subject} — {msg.body}</p>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: 4 }}>{msg.email} • {new Date(msg.created_at).toLocaleDateString()}</p>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+              <a
+                href={`mailto:${encodeURIComponent(msg.email)}?subject=${encodeURIComponent('Re: ' + (msg.subject || 'Portfolio Inquiry'))}`}
+                style={{
+                  background: 'rgba(0, 245, 212, 0.1)',
+                  border: '1px solid rgba(0, 245, 212, 0.25)',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  color: 'var(--accent-cyan)',
+                  textDecoration: 'none',
+                  fontSize: '0.7rem',
+                  fontWeight: 500,
+                }}
+              >
+                Reply by email
+              </a>
               <button onClick={() => markRead(msg.id, !msg.read)} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 8px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.7rem' }}>Mark {msg.read ? 'Unread' : 'Read'}</button>
               <button onClick={() => handleDelete(msg.id)} style={{ background: 'transparent', border: '1px solid #ff4444', borderRadius: 6, padding: '4px 8px', color: '#ff4444', cursor: 'pointer', fontSize: '0.7rem' }}>Delete</button>
             </div>
@@ -958,6 +1038,17 @@ export function ExperienceManager() {
   useEffect(() => { loadExperience(); }, []);
 
   const handleSave = async () => {
+    if (!formData.current && formData.start_date && formData.end_date) {
+      if (formData.end_date < formData.start_date) {
+        alert('End date cannot be earlier than start date.');
+        return;
+      }
+      if (formData.start_date.trim() === formData.end_date.trim()) {
+        if (!confirm('Warning: Start date and end date are identical. Do you still wish to save?')) {
+          return;
+        }
+      }
+    }
     try {
       if (editingId) {
         await api.experience.update(editingId, formData);
@@ -984,7 +1075,7 @@ export function ExperienceManager() {
             <input placeholder="React, Node.js, Leadership" value={(formData.tags || []).join(', ')} onChange={e => setFormData({...formData, tags: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})} className="admin-input" />
           </div>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem' }}>
-            <input type="checkbox" checked={formData.current || false} onChange={e => setFormData({...formData, current: e.target.checked})} /> Currently working here
+            <input type="checkbox" checked={formData.current || false} onChange={e => setFormData({...formData, current: e.target.checked, end_date: e.target.checked ? '' : formData.end_date})} /> Currently working here
           </label>
           <input placeholder="Start Date (e.g. 2021)" value={formData.start_date || ''} onChange={e => setFormData({...formData, start_date: e.target.value})} className="admin-input" />
           <input placeholder="End Date (e.g. 2023)" value={formData.end_date || ''} onChange={e => setFormData({...formData, end_date: e.target.value})} className="admin-input" disabled={formData.current} style={{ opacity: formData.current ? 0.5 : 1 }} />
@@ -1047,18 +1138,31 @@ export function ExperienceManager() {
   );
 }
 
+const LUCIDE_ICONS = [
+  'Sparkles', 'Cpu', 'Palette', 'Compass', 'Code2', 'Rocket', 'Zap', 'Target', 'Layers', 'Terminal', 'Flame', 'Shield', 'Users', 'Globe', 'Heart'
+];
+
 export function SiteSettings() {
   const [settings, setSettings] = useState<Record<string, string>>({
+    hero_tagline: 'Full-stack developer building AI-powered web applications and high-performance interfaces.',
+    availability_status: 'open',
+    availability_text: 'Available for freelance & full-time roles',
+    career_start_date: '2023-09',
     building_status: 'Smart Campus AI Platform',
+    profile_image_url: '',
     social_github: 'https://github.com/manthanpatel',
     social_linkedin: 'https://linkedin.com/in/manthanpatel',
     social_instagram: 'https://instagram.com/manthanpatel',
     social_x: 'https://x.com/manthanpatel',
     social_email: 'manthan@example.com',
-    bg_video_dark: '',
-    bg_video_light: '',
-    profile_image_url: '',
+    show_phone: 'false',
+    show_map: 'false',
     show_resume_section: 'true',
+    bg_video_enabled: 'true',
+    blog_min_posts: '1',
+    quick_info_enabled: 'true',
+    music_url: '',
+    music_title: 'Ambient Focus',
     about_text: "I'm a full-stack developer passionate about building scalable AI applications and interactive web experiences. With expertise in React, Node.js, and modern cloud architecture, I love turning complex problems into elegant solutions.",
     ai_context: 'Currently working on Smart Campus AI Platform. Available for freelance React/AI projects. Based in Hubli, Karnataka, India.',
     about_stats: JSON.stringify([
@@ -1074,9 +1178,19 @@ export function SiteSettings() {
       { icon: '🥇', title: 'Hackathon Winner', description: 'Won a campus-wide hackathon with the Smart Campus Sustainability System.' },
       { icon: '🚀', title: 'Shipped 10+ Apps', description: 'Delivered over 10 production-ready applications for clients and personal projects.' },
       { icon: '📦', title: 'Open Source Contributor', description: 'Contributed to popular open source projects and shared my own tools with the community.' }
+    ]),
+    drive_cards: JSON.stringify([
+      { icon: 'Palette', title: 'Design as Engineering', statement: 'I see design as a problem-solving discipline: every pixel and interaction serves user intent.', proof_label: 'Smart Campus Sustainability System', project_slug: 'smart-campus-sustainability' },
+      { icon: 'Cpu', title: 'Pragmatic Innovation', statement: "I don't reinvent the wheel; I connect cutting-edge AI capabilities to concrete operational bottlenecks.", proof_label: 'Emergency Crowd Management', project_slug: 'emergency-crowd-management' },
+      { icon: 'Users', title: 'Collaborative Leadership', statement: 'Experienced leading technical tracks, mentoring teammates, and shipping reliably under deadlines.', proof_label: 'Bus Tracking System', project_slug: 'bus-tracking-system' },
+      { icon: 'Layers', title: 'Systematic Problem Solving', statement: 'Complex architectures excite me; I deconstruct edge cases and engineer resilient distributed flows.', proof_label: 'Real-time Analytics Dashboard', project_slug: 'portfolio-dashboard' }
     ])
   });
+
+  const [projectsList, setProjectsList] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     api.settings.getAll().then(data => {
@@ -1085,10 +1199,32 @@ export function SiteSettings() {
         data.forEach(s => obj[s.key] = s.value);
         setSettings(prev => ({ ...prev, ...obj }));
       }
-    });
+    }).catch(console.error);
+
+    api.projects.getAll().then(setProjectsList).catch(console.error);
   }, []);
 
-  const handleChange = (key: string, value: string) => setSettings(prev => ({ ...prev, [key]: value }));
+  // Warn on unsaved changes when navigating away
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  const handleChange = (key: string, value: string) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+    setIsDirty(true);
+  };
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -1096,198 +1232,637 @@ export function SiteSettings() {
       for (const key of Object.keys(settings)) {
         await api.settings.update(key, settings[key]);
       }
-      alert('Settings saved successfully!');
+      setIsDirty(false);
+      showToast('Settings saved successfully!');
     } catch (err) {
-      alert('Failed to save settings.');
+      console.error(err);
+      showToast('Failed to save settings. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Drive Cards Helper
+  const driveCards: Array<{ icon: string; title: string; statement: string; proof_label: string; project_slug: string }> = (() => {
+    try {
+      return JSON.parse(settings.drive_cards || '[]');
+    } catch {
+      return [];
+    }
+  })();
+
+  const updateDriveCards = (newCards: typeof driveCards) => {
+    handleChange('drive_cards', JSON.stringify(newCards));
+  };
+
   return (
-    <div>
-      <h1 className="font-hero" style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 24 }}>Site Settings</h1>
-
-      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>Currently Building Status</h2>
-        <input
-          type="text"
-          value={settings.building_status}
-          onChange={e => handleChange('building_status', e.target.value)}
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none', marginBottom: 16 }}
-        />
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-          <input
-            type="checkbox"
-            id="show_resume_section"
-            checked={settings.show_resume_section !== 'false'}
-            onChange={e => handleChange('show_resume_section', e.target.checked ? 'true' : 'false')}
-            style={{ width: 18, height: 18, cursor: 'pointer' }}
-          />
-          <label htmlFor="show_resume_section" className="font-heading" style={{ fontSize: '1rem', cursor: 'pointer', color: 'var(--text-primary)' }}>
-            Show Resume Section on Public Site
-          </label>
+    <div style={{ position: 'relative', maxWidth: 900 }}>
+      {toast && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            top: 24,
+            right: 24,
+            background: 'var(--surface-elevated)',
+            border: '1px solid var(--accent-cyan)',
+            color: 'var(--text-primary)',
+            padding: '12px 20px',
+            borderRadius: 8,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+            zIndex: 100,
+            fontSize: '0.9rem',
+            fontWeight: 600,
+          }}
+        >
+          {toast}
         </div>
-        
-        <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>Profile Image URL</h2>
-        <input
-          type="text"
-          value={settings.profile_image_url || ''}
-          onChange={e => handleChange('profile_image_url', e.target.value)}
-          placeholder="e.g. https://your-supabase-url.com/.../profile.jpg"
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.9rem', outline: 'none' }}
-        />
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 className="font-hero" style={{ fontSize: '1.6rem', fontWeight: 800 }}>Site Settings</h1>
+          {isDirty && (
+            <p style={{ color: '#f4a738', fontSize: '0.8rem', marginTop: 4 }}>
+              ● You have unsaved changes
+            </p>
+          )}
+        </div>
+        <button onClick={handleSave} disabled={loading} className="btn-primary">
+          {loading ? 'Saving...' : 'Save All Settings'}
+        </button>
       </div>
 
+      {/* 1. Hero & Availability */}
       <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>Background Video URLs (Optional)</h2>
-        
-        <div style={{ marginBottom: 12 }}>
-          <label className="font-heading" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Dark Mode Video URL (MP4)</label>
-          <input
-            type="text"
-            value={settings.bg_video_dark || ''}
-            onChange={e => handleChange('bg_video_dark', e.target.value)}
-            placeholder="e.g. https://cdn.pixabay.com/.../dark_bg.mp4"
-            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
-          />
-        </div>
-        
-        <div style={{ marginBottom: 12 }}>
-          <label className="font-heading" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Light Mode Video URL (MP4)</label>
-          <input
-            type="text"
-            value={settings.bg_video_light || ''}
-            onChange={e => handleChange('bg_video_light', e.target.value)}
-            placeholder="e.g. https://cdn.pixabay.com/.../light_bg.mp4"
-            style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
-          />
-        </div>
-      </div>
-
-      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>Social Media URLs</h2>
-        {['github', 'linkedin', 'instagram', 'x', 'email'].map((platform) => (
-          <div key={platform} style={{ marginBottom: 12 }}>
-            <label className="font-heading" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: 4, textTransform: 'capitalize' }}>{platform}</label>
+        <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 16, color: 'var(--accent-violet)' }}>
+          1. Hero & Availability
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Hero Tagline</label>
             <input
               type="text"
-              value={settings[`social_${platform}`]}
+              value={settings.hero_tagline || ''}
+              onChange={e => handleChange('hero_tagline', e.target.value)}
+              placeholder="e.g. Full-stack developer building AI-powered web applications"
+              className="admin-input"
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Availability Status</label>
+            <select
+              value={settings.availability_status || 'open'}
+              onChange={e => handleChange('availability_status', e.target.value)}
+              className="admin-input"
+            >
+              <option value="open">Open for opportunities</option>
+              <option value="busy">Busy / Exploring</option>
+              <option value="closed">Not currently available</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Availability Text (Pill badge)</label>
+            <input
+              type="text"
+              value={settings.availability_text || ''}
+              onChange={e => handleChange('availability_text', e.target.value)}
+              placeholder="e.g. Available for freelance & full-time roles"
+              className="admin-input"
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Career Start Date (YYYY-MM)</label>
+            <input
+              type="text"
+              value={settings.career_start_date || ''}
+              onChange={e => handleChange('career_start_date', e.target.value)}
+              placeholder="e.g. 2023-09"
+              className="admin-input"
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Currently Building Status</label>
+            <input
+              type="text"
+              value={settings.building_status || ''}
+              onChange={e => handleChange('building_status', e.target.value)}
+              placeholder="e.g. Next-gen AI orchestration platform"
+              className="admin-input"
+            />
+          </div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Profile Image URL</label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text"
+                value={settings.profile_image_url || ''}
+                onChange={e => handleChange('profile_image_url', e.target.value)}
+                placeholder="https://..."
+                className="admin-input"
+                style={{ flex: 1 }}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    try {
+                      const url = await api.storage.uploadFile(e.target.files[0], 'portfolio-media', 'profile');
+                      handleChange('profile_image_url', url);
+                      showToast('Profile image uploaded!');
+                    } catch (err: any) {
+                      alert(err.message || 'Upload failed');
+                    }
+                  }
+                }}
+                style={{ fontSize: '0.8rem', width: 140 }}
+              />
+            </div>
+          </div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>About Me Text</label>
+            <textarea
+              rows={4}
+              value={settings.about_text || ''}
+              onChange={e => handleChange('about_text', e.target.value)}
+              className="admin-input"
+              style={{ width: '100%', resize: 'vertical' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Quick Info & Music */}
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+        <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 16, color: 'var(--accent-cyan)' }}>
+          2. Quick Info & Music Panel
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.9rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={settings.quick_info_enabled !== 'false'}
+              onChange={e => handleChange('quick_info_enabled', e.target.checked ? 'true' : 'false')}
+              style={{ width: 18, height: 18 }}
+            />
+            <span>Enable Floating Quick Info & Music Panel (bottom-right)</span>
+          </label>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Music Track Title</label>
+              <input
+                type="text"
+                value={settings.music_title || ''}
+                onChange={e => handleChange('music_title', e.target.value)}
+                placeholder="e.g. Ambient Focus"
+                className="admin-input"
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Music Audio URL (MP3/WAV/OGG)</label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <input
+                  type="text"
+                  value={settings.music_url || ''}
+                  onChange={e => handleChange('music_url', e.target.value)}
+                  placeholder="Leave blank to hide Music tab"
+                  className="admin-input"
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={async (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      try {
+                        const url = await api.storage.uploadFile(e.target.files[0], 'portfolio-media', 'music');
+                        handleChange('music_url', url);
+                        showToast('Audio track uploaded!');
+                      } catch (err: any) {
+                        alert(err.message || 'Audio upload failed');
+                      }
+                    }
+                  }}
+                  style={{ fontSize: '0.8rem', width: 140 }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Visibility Toggles */}
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+        <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>
+          3. Visibility & Content Toggles
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={settings.show_phone === 'true'}
+              onChange={e => handleChange('show_phone', e.target.checked ? 'true' : 'false')}
+              style={{ width: 16, height: 16 }}
+            />
+            <span>Show Public Phone Number (+91 9686335075)</span>
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={settings.show_map === 'true'}
+              onChange={e => handleChange('show_map', e.target.checked ? 'true' : 'false')}
+              style={{ width: 16, height: 16 }}
+            />
+            <span>Show Google Maps Embed in Contact</span>
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={settings.show_resume_section !== 'false'}
+              onChange={e => handleChange('show_resume_section', e.target.checked ? 'true' : 'false')}
+              style={{ width: 16, height: 16 }}
+            />
+            <span>Show Resume Section</span>
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.85rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={settings.bg_video_enabled !== 'false'}
+              onChange={e => handleChange('bg_video_enabled', e.target.checked ? 'true' : 'false')}
+              style={{ width: 16, height: 16 }}
+            />
+            <span>Enable Background Video (Desktop only)</span>
+          </label>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 4, color: 'var(--text-secondary)' }}>
+              Blog Min Posts to Show Section (0 = always show)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={settings.blog_min_posts || '1'}
+              onChange={e => handleChange('blog_min_posts', e.target.value)}
+              className="admin-input"
+              style={{ width: 100 }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. What Drives Me Cards Editor */}
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-violet)' }}>
+              4. "What Drives Me" Bento Cards
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+              Displayed in About section as 1 large + 3 small bento cards
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              updateDriveCards([
+                ...driveCards,
+                { icon: 'Sparkles', title: 'New Drive Pillar', statement: 'Statement on focus and drive.', proof_label: 'View Project', project_slug: projectsList[0]?.slug || '' }
+              ]);
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--accent-violet)',
+              borderRadius: 6,
+              padding: '6px 12px',
+              color: 'var(--accent-violet)',
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+            }}
+          >
+            + Add Card
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {driveCards.map((card, idx) => (
+            <div
+              key={idx}
+              style={{
+                padding: 16,
+                borderRadius: 10,
+                border: '1px solid var(--border-color)',
+                background: 'rgba(255,255,255,0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--accent-cyan)' }}>
+                  Card #{idx + 1} {idx === 0 ? '(Hero/Large Card)' : ''}
+                </span>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <button
+                    disabled={idx === 0}
+                    onClick={() => {
+                      const copy = [...driveCards];
+                      const temp = copy[idx];
+                      copy[idx] = copy[idx - 1];
+                      copy[idx - 1] = temp;
+                      updateDriveCards(copy);
+                    }}
+                    style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 4, padding: '2px 8px', color: 'var(--text-secondary)', cursor: idx === 0 ? 'not-allowed' : 'pointer' }}
+                    title="Move up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    disabled={idx === driveCards.length - 1}
+                    onClick={() => {
+                      const copy = [...driveCards];
+                      const temp = copy[idx];
+                      copy[idx] = copy[idx + 1];
+                      copy[idx + 1] = temp;
+                      updateDriveCards(copy);
+                    }}
+                    style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 4, padding: '2px 8px', color: 'var(--text-secondary)', cursor: idx === driveCards.length - 1 ? 'not-allowed' : 'pointer' }}
+                    title="Move down"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    onClick={() => {
+                      const copy = [...driveCards];
+                      copy.splice(idx, 1);
+                      updateDriveCards(copy);
+                    }}
+                    style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '2px 8px', fontSize: '1rem' }}
+                    title="Delete card"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Lucide Icon</label>
+                  <select
+                    value={card.icon}
+                    onChange={(e) => {
+                      const copy = [...driveCards];
+                      copy[idx].icon = e.target.value;
+                      updateDriveCards(copy);
+                    }}
+                    className="admin-input"
+                  >
+                    {LUCIDE_ICONS.map((ic) => (
+                      <option key={ic} value={ic}>{ic}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Card Title</label>
+                  <input
+                    type="text"
+                    value={card.title}
+                    onChange={(e) => {
+                      const copy = [...driveCards];
+                      copy[idx].title = e.target.value;
+                      updateDriveCards(copy);
+                    }}
+                    className="admin-input"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Proof Label</label>
+                  <input
+                    type="text"
+                    value={card.proof_label}
+                    onChange={(e) => {
+                      const copy = [...driveCards];
+                      copy[idx].proof_label = e.target.value;
+                      updateDriveCards(copy);
+                    }}
+                    className="admin-input"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Statement</label>
+                  <input
+                    type="text"
+                    value={card.statement}
+                    onChange={(e) => {
+                      const copy = [...driveCards];
+                      copy[idx].statement = e.target.value;
+                      updateDriveCards(copy);
+                    }}
+                    className="admin-input"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Linked Project</label>
+                  <select
+                    value={card.project_slug}
+                    onChange={(e) => {
+                      const copy = [...driveCards];
+                      copy[idx].project_slug = e.target.value;
+                      updateDriveCards(copy);
+                    }}
+                    className="admin-input"
+                  >
+                    <option value="">-- None --</option>
+                    {projectsList.map((p) => (
+                      <option key={p.id} value={p.slug}>{p.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. About Stats */}
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 600 }}>By The Numbers (About Stats)</h2>
+          <button
+            onClick={() => {
+              try {
+                const current = JSON.parse(settings.about_stats || '[]');
+                handleChange('about_stats', JSON.stringify([...current, { label: 'New Stat', value: 0, suffix: '' }]));
+              } catch {}
+            }}
+            style={{ background: 'transparent', border: '1px solid var(--accent-violet)', borderRadius: 6, padding: '4px 10px', color: 'var(--accent-violet)', cursor: 'pointer', fontSize: '0.75rem' }}
+          >
+            + Add Stat
+          </button>
+        </div>
+        
+        {(() => {
+          let stats: Array<{ label: string; value: number; suffix: string }> = [];
+          try { stats = JSON.parse(settings.about_stats || '[]'); } catch { return <p>Invalid stats data</p>; }
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {stats.map((stat, index) => (
+                <div key={index} style={{ display: 'flex', gap: 12 }}>
+                  <input
+                    type="text"
+                    value={stat.label}
+                    onChange={e => {
+                      const s = [...stats]; s[index].label = e.target.value; handleChange('about_stats', JSON.stringify(s));
+                    }}
+                    placeholder="Label (e.g. Hours Coded)"
+                    className="admin-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="number"
+                    value={stat.value}
+                    onChange={e => {
+                      const s = [...stats]; s[index].value = parseInt(e.target.value, 10) || 0; handleChange('about_stats', JSON.stringify(s));
+                    }}
+                    placeholder="Value"
+                    className="admin-input"
+                    style={{ width: 100 }}
+                  />
+                  <input
+                    type="text"
+                    value={stat.suffix}
+                    onChange={e => {
+                      const s = [...stats]; s[index].suffix = e.target.value; handleChange('about_stats', JSON.stringify(s));
+                    }}
+                    placeholder="Suffix"
+                    className="admin-input"
+                    style={{ width: 80 }}
+                  />
+                  <button
+                    onClick={() => {
+                      const s = [...stats]; s.splice(index, 1); handleChange('about_stats', JSON.stringify(s));
+                    }}
+                    style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1.1rem', padding: '0 8px' }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 6. Achievement Unlocks */}
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Achievement Unlocks 🏆</h2>
+          <button
+            onClick={() => {
+              try {
+                const current = JSON.parse(settings.achievements || '[]');
+                handleChange('achievements', JSON.stringify([...current, { icon: '⭐', title: 'New Achievement', description: '' }]));
+              } catch {}
+            }}
+            style={{ background: 'transparent', border: '1px solid var(--accent-violet)', borderRadius: 6, padding: '4px 10px', color: 'var(--accent-violet)', cursor: 'pointer', fontSize: '0.75rem' }}
+          >
+            + Add Achievement
+          </button>
+        </div>
+        
+        {(() => {
+          let achievements: Array<{ icon: string; title: string; description: string }> = [];
+          try { achievements = JSON.parse(settings.achievements || '[]'); } catch { return <p>Invalid achievements data</p>; }
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {achievements.map((ach, index) => (
+                <div key={index} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <input
+                    type="text"
+                    value={ach.icon}
+                    onChange={e => {
+                      const a = [...achievements]; a[index].icon = e.target.value; handleChange('achievements', JSON.stringify(a));
+                    }}
+                    placeholder="🏆"
+                    className="admin-input"
+                    style={{ width: 60, textAlign: 'center' }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                    <input
+                      type="text"
+                      value={ach.title}
+                      onChange={e => {
+                        const a = [...achievements]; a[index].title = e.target.value; handleChange('achievements', JSON.stringify(a));
+                      }}
+                      placeholder="Title"
+                      className="admin-input"
+                    />
+                    <textarea
+                      value={ach.description}
+                      onChange={e => {
+                        const a = [...achievements]; a[index].description = e.target.value; handleChange('achievements', JSON.stringify(a));
+                      }}
+                      placeholder="Description"
+                      rows={2}
+                      className="admin-input"
+                      style={{ resize: 'vertical' }}
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const a = [...achievements]; a.splice(index, 1); handleChange('achievements', JSON.stringify(a));
+                    }}
+                    style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1.1rem', padding: '8px' }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
+
+      {/* 7. Social Links */}
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
+        <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 16 }}>Social Media URLs</h2>
+        {['github', 'linkedin', 'instagram', 'x', 'email'].map((platform) => (
+          <div key={platform} style={{ marginBottom: 12 }}>
+            <label className="font-heading" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: 4, textTransform: 'capitalize' }}>
+              {platform}
+            </label>
+            <input
+              type="text"
+              value={settings[`social_${platform}`] || ''}
               onChange={e => handleChange(`social_${platform}`, e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
+              className="admin-input"
             />
           </div>
         ))}
       </div>
 
-      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>About Me Text</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: 12 }}>This text is displayed in the About Me section.</p>
-        <textarea
-          rows={6}
-          value={settings.about_text}
-          onChange={e => handleChange('about_text', e.target.value)}
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', resize: 'vertical' }}
-        />
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 32 }}>
+        <button onClick={handleSave} disabled={loading} className="btn-primary" style={{ padding: '14px 32px' }}>
+          {loading ? 'Saving Changes...' : 'Save All Settings'}
+        </button>
       </div>
-
-      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, marginBottom: 12 }}>AI Chat Context</h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: 12 }}>This text is appended to the AI assistant's knowledge base.</p>
-        <textarea
-          rows={6}
-          value={settings.ai_context}
-          onChange={e => handleChange('ai_context', e.target.value)}
-          style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', resize: 'vertical' }}
-        />
-      </div>
-
-      <div className="glass-card" style={{ padding: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600 }}>By The Numbers (About Stats)</h2>
-          <button onClick={() => {
-            try {
-              const current = JSON.parse(settings.about_stats);
-              handleChange('about_stats', JSON.stringify([...current, { label: 'New Stat', value: 0, suffix: '' }]));
-            } catch(e) {}
-          }} style={{ background: 'transparent', border: '1px solid var(--accent-violet)', borderRadius: 6, padding: '4px 10px', color: 'var(--accent-violet)', cursor: 'pointer', fontSize: '0.75rem' }}>+ Add Stat</button>
-        </div>
-        
-        {(() => {
-          let stats = [];
-          try { stats = JSON.parse(settings.about_stats); } catch(e) { return <p>Invalid stats data</p>; }
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {stats.map((stat: any, index: number) => (
-                <div key={index} style={{ display: 'flex', gap: 12 }}>
-                  <input type="text" value={stat.label} onChange={e => {
-                    const s = [...stats]; s[index].label = e.target.value; handleChange('about_stats', JSON.stringify(s));
-                  }} placeholder="Label (e.g. Hours Coded)" style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} />
-                  
-                  <input type="number" value={stat.value} onChange={e => {
-                    const s = [...stats]; s[index].value = parseInt(e.target.value) || 0; handleChange('about_stats', JSON.stringify(s));
-                  }} placeholder="Value (e.g. 1200)" style={{ width: 100, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} />
-                  
-                  <input type="text" value={stat.suffix} onChange={e => {
-                    const s = [...stats]; s[index].suffix = e.target.value; handleChange('about_stats', JSON.stringify(s));
-                  }} placeholder="Suffix (e.g. +)" style={{ width: 80, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} />
-                  
-                  <button onClick={() => {
-                    const s = [...stats]; s.splice(index, 1); handleChange('about_stats', JSON.stringify(s));
-                  }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1rem', padding: '0 8px' }}>×</button>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
-      </div>
-
-      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h2 className="font-heading" style={{ fontSize: '1rem', fontWeight: 600 }}>Achievement Unlocks 🏆</h2>
-          <button onClick={() => {
-            try {
-              const current = JSON.parse(settings.achievements || '[]');
-              handleChange('achievements', JSON.stringify([...current, { icon: '⭐', title: 'New Achievement', description: '' }]));
-            } catch(e) {}
-          }} style={{ background: 'transparent', border: '1px solid var(--accent-violet)', borderRadius: 6, padding: '4px 10px', color: 'var(--accent-violet)', cursor: 'pointer', fontSize: '0.75rem' }}>+ Add Achievement</button>
-        </div>
-        
-        {(() => {
-          let achievements = [];
-          try { achievements = JSON.parse(settings.achievements || '[]'); } catch(e) { return <p>Invalid achievements data</p>; }
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {achievements.map((ach: any, index: number) => (
-                <div key={index} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <input type="text" value={ach.icon} onChange={e => {
-                    const a = [...achievements]; a[index].icon = e.target.value; handleChange('achievements', JSON.stringify(a));
-                  }} placeholder="Icon (e.g. 🏆)" style={{ width: 60, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', textAlign: 'center' }} />
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                    <input type="text" value={ach.title} onChange={e => {
-                      const a = [...achievements]; a[index].title = e.target.value; handleChange('achievements', JSON.stringify(a));
-                    }} placeholder="Title" style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }} />
-                    
-                    <textarea value={ach.description} onChange={e => {
-                      const a = [...achievements]; a[index].description = e.target.value; handleChange('achievements', JSON.stringify(a));
-                    }} placeholder="Description" rows={2} style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', resize: 'vertical' }} />
-                  </div>
-                  
-                  <button onClick={() => {
-                    const a = [...achievements]; a.splice(index, 1); handleChange('achievements', JSON.stringify(a));
-                  }} style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1rem', padding: '8px', height: 36 }}>×</button>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
-      </div>
-
-      <button onClick={handleSave} disabled={loading} className="btn-primary" style={{ marginTop: 24 }}>
-        {loading ? 'Saving...' : 'Save Settings'}
-      </button>
     </div>
   );
 }
