@@ -6,6 +6,7 @@ import { api } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import type { Post } from '../lib/supabase';
 import { IconArrowLeft, IconHeart, IconShare } from '../components/ui/Icons';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 export default function BlogPost() {
   const { slug } = useParams();
@@ -15,6 +16,12 @@ export default function BlogPost() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [related, setRelated] = useState<Post[]>([]);
+
+  useDocumentMeta({
+    title: post ? `${post.title} | Manthan Patel` : 'Article | Manthan Patel',
+    description: post?.excerpt || 'Thoughts, tutorials, and engineering articles by Manthan Patel.',
+    ogImage: post?.cover_url,
+  });
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -124,18 +131,36 @@ export default function BlogPost() {
       <div className="reading-progress" style={{ width: `${readProgress}%` }} />
 
       <div className="section-container" style={{ paddingTop: 100, maxWidth: 800, margin: '0 auto' }}>
-        <Link to="/#blog" className="font-heading" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', marginBottom: 32, fontSize: '0.9rem' }}>
+        <Link
+          to="/#blog"
+          className="font-heading"
+          style={{
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            color: 'var(--text-secondary)',
+            marginBottom: 32,
+            fontSize: '0.9rem',
+          }}
+        >
           <IconArrowLeft size={16} /> Back to Blog
         </Link>
 
         <ScrollReveal>
-          <img src={post.cover_url || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800'} alt={post.title} style={{ width: '100%', height: 'auto', maxHeight: 360, objectFit: 'cover', borderRadius: 16, marginBottom: 32 }} />
+          <img
+            src={post.cover_url || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800'}
+            alt={post.title}
+            style={{ width: '100%', height: 'auto', maxHeight: 360, objectFit: 'cover', borderRadius: 16, marginBottom: 32 }}
+          />
         </ScrollReveal>
 
         <ScrollReveal>
           <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
             {(post.tags || []).map((c) => (
-              <span key={c} className="font-accent" style={{ fontSize: '0.65rem', color: 'var(--accent-cyan)', letterSpacing: '2px' }}>{c}</span>
+              <span key={c} className="font-mono" style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)', letterSpacing: '1px' }}>
+                {c}
+              </span>
             ))}
           </div>
           <h1 className="font-hero" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.5rem)', fontWeight: 800, lineHeight: 1.2, marginBottom: 16 }}>
@@ -201,32 +226,41 @@ export default function BlogPost() {
         <ScrollReveal>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 40, borderBottom: '1px solid var(--border-color)', position: 'relative' }}>
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 0 15px rgba(108,99,255,0.4)' }}
-              whileTap={{ scale: 0.9, rotate: -10 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleLike}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px', borderRadius: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 10,
                 border: `1px solid ${liked ? 'var(--accent-violet)' : 'var(--border-color)'}`,
                 background: liked ? 'rgba(108,99,255,0.15)' : 'transparent',
                 color: liked ? 'var(--accent-violet)' : 'var(--text-secondary)',
-                cursor: 'pointer', fontFamily: 'var(--font-heading)', fontSize: '0.9rem',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '0.9rem',
                 transition: 'all 0.3s',
               }}
             >
-              <motion.div animate={{ scale: liked ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
-                <IconHeart size={18} />
-              </motion.div>
+              <IconHeart size={18} />
               <span>{likeCount}</span>
             </motion.button>
             <button
               onClick={handleShare}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px', borderRadius: 10,
-                border: '1px solid var(--border-color)', background: 'transparent',
-                color: 'var(--text-secondary)', cursor: 'pointer',
-                fontFamily: 'var(--font-heading)', fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 10,
+                border: '1px solid var(--border-color)',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-heading)',
+                fontSize: '0.9rem',
               }}
             >
               <IconShare size={18} /> Share
@@ -235,24 +269,36 @@ export default function BlogPost() {
         </ScrollReveal>
 
         {/* Related Posts */}
-        <ScrollReveal>
-          <div style={{ marginTop: 48 }}>
-            <h2 className="font-heading" style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 24 }}>Related Posts</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
-              {related.map((p) => (
-                <Link key={p.id} to={`/blog/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="glass-card" style={{ overflow: 'hidden' }}>
-                    <img src={p.cover_url || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800'} alt={p.title} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
-                    <div style={{ padding: 14 }}>
-                      <h3 className="font-heading" style={{ fontSize: '0.9rem', fontWeight: 600 }}>{p.title}</h3>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: 4 }}>{p.read_time} min read</p>
+        {related.length > 0 && (
+          <ScrollReveal>
+            <div style={{ marginTop: 48 }}>
+              <h2 className="font-heading" style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: 24 }}>
+                Related Posts
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
+                {related.map((p) => (
+                  <Link key={p.id} to={`/blog/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="glass-card" style={{ overflow: 'hidden' }}>
+                      <img
+                        src={p.cover_url || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800'}
+                        alt={p.title}
+                        style={{ width: '100%', height: 120, objectFit: 'cover' }}
+                      />
+                      <div style={{ padding: 14 }}>
+                        <h3 className="font-heading" style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                          {p.title}
+                        </h3>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: 4 }}>
+                          {p.read_time} min read
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        </ScrollReveal>
+          </ScrollReveal>
+        )}
       </div>
     </>
   );
