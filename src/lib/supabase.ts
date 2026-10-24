@@ -79,6 +79,8 @@ export interface GalleryItem {
   image_url: string;
   category: string;
   order_index: number;
+  credit?: string;
+  description?: string;
 }
 
 export interface Message {

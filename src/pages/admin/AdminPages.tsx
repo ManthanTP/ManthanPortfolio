@@ -581,7 +581,7 @@ export function GalleryManager() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<GalleryItem>>({ title: '', image_url: '', category: '', order_index: 0 });
+  const [formData, setFormData] = useState<Partial<GalleryItem>>({ title: '', image_url: '', category: '', order_index: 0, credit: '', description: '' });
   
   // Crop states
   const [cropImageFile, setCropImageFile] = useState<File | null>(null);
@@ -610,7 +610,7 @@ export function GalleryManager() {
         await api.gallery.create(formData as any);
       }
       setEditingId(null);
-      setFormData({ title: '', image_url: '', category: '', order_index: 0 });
+      setFormData({ title: '', image_url: '', category: '', order_index: 0, credit: '', description: '' });
       loadItems();
     } catch (err) {
       alert('Save failed');
@@ -675,6 +675,31 @@ export function GalleryManager() {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
+          </div>
+
+          <input 
+            placeholder='Credit ("By", e.g. GCL Media Team)' 
+            value={formData.credit || ''} 
+            onChange={e => setFormData({...formData, credit: e.target.value})} 
+            className="admin-input" 
+          />
+          <input 
+            type="number" 
+            placeholder="Order Index" 
+            value={formData.order_index ?? 0} 
+            onChange={e => setFormData({...formData, order_index: parseInt(e.target.value) || 0})} 
+            className="admin-input" 
+          />
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <textarea 
+              placeholder="Description (optional caption or backstory)" 
+              value={formData.description || ''} 
+              onChange={e => setFormData({...formData, description: e.target.value})} 
+              className="admin-input"
+              rows={2}
+              style={{ width: '100%', resize: 'vertical' }}
+            />
           </div>
 
           <div style={{ gridColumn: 'span 2' }}>
@@ -746,11 +771,10 @@ export function GalleryManager() {
               </span>
             </div>
           </div>
-          <input type="number" placeholder="Order Index" value={formData.order_index || 0} onChange={e => setFormData({...formData, order_index: parseInt(e.target.value) || 0})} className="admin-input" />
         </div>
         <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
           <button onClick={handleSave} className="btn-primary">Save Item</button>
-          {editingId && <button onClick={() => { setEditingId(null); setFormData({ title: '', image_url: '', category: '', order_index: 0 }); }} className="btn-secondary">Cancel</button>}
+          {editingId && <button onClick={() => { setEditingId(null); setFormData({ title: '', image_url: '', category: '', order_index: 0, credit: '', description: '' }); }} className="btn-secondary">Cancel</button>}
         </div>
       </div>
 
@@ -760,7 +784,7 @@ export function GalleryManager() {
             <thead style={{ background: 'rgba(255,255,255,0.02)' }}>
               <tr>
                 <th style={{ textAlign: 'left', padding: '16px', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Image</th>
-                <th style={{ textAlign: 'left', padding: '16px', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Title / Category</th>
+                <th style={{ textAlign: 'left', padding: '16px', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Title / Details</th>
                 <th style={{ textAlign: 'left', padding: '16px', borderBottom: '1px solid var(--border-color)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Actions</th>
               </tr>
             </thead>
@@ -784,8 +808,18 @@ export function GalleryManager() {
                     )}
                   </td>
                   <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>
-                    <div style={{ fontSize: '0.9rem' }}>{item.title}</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{item.title}</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.category}</div>
+                    {item.credit && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--accent-cyan)', marginTop: 2 }}>
+                        By {item.credit}
+                      </div>
+                    )}
+                    {item.description && (
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: 2, fontStyle: 'italic', maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.description}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: '12px', borderBottom: '1px solid var(--border-color)' }}>
                     <button onClick={() => { setEditingId(item.id); setFormData(item); }} style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 6, padding: '4px 10px', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.75rem', marginRight: 6 }}>Edit</button>

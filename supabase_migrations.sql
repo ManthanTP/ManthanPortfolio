@@ -57,3 +57,7 @@ VALUES
   ('music_title', 'Ambient Focus'),
   ('drive_cards', '[{"icon":"Sparkles","title":"AI & Automation First","statement":"Leveraging generative AI and intelligent workflows to compress dev cycles and build adaptive user experiences.","proof_label":"Explore AgentFlow","project_slug":"agentflow"},{"icon":"Cpu","title":"High-Performance Web Architecture","statement":"Obsessed with sub-second response times, fluid 60fps animations, and zero-jank frontend systems.","proof_label":"View NexStore","project_slug":"nexstore"},{"icon":"Palette","title":"Craft & Design Systems","statement":"Bridging typography, deliberate spacing, and micro-interactions into interfaces that feel tactile and memorable.","proof_label":"Inspect DevLens","project_slug":"devlens"},{"icon":"Compass","title":"End-to-End Ownership","statement":"From schema design and database optimization to polished responsive interfaces and CI/CD pipelines.","proof_label":"Check NeuroScribe","project_slug":"neuroscribe"}]')
 ON CONFLICT (key) DO NOTHING;
+
+-- 5. Alter gallery_items table to add credit and description
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS credit TEXT;
+ALTER TABLE public.gallery_items ADD COLUMN IF NOT EXISTS description TEXT;
