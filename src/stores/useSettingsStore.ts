@@ -1,10 +1,12 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
+import { DEFAULT_ACHIEVEMENTS, DEFAULT_DRIVE_CARDS } from '../lib/constants';
 
 interface SettingsStore {
   settings: Record<string, string>;
   loading: boolean;
   fetchSettings: () => Promise<void>;
+  updateLocalSetting: (key: string, value: string) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
@@ -14,38 +16,19 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     social_instagram: 'https://instagram.com/manthanpatel',
     social_x: 'https://x.com/manthanpatel',
     social_email: 'manthan@example.com',
-    achievements: JSON.stringify([
-      {
-        icon: '🏆',
-        title: 'Built First Full Stack App',
-        description: 'Shipped a complete web application with frontend, backend, and database — from scratch.'
-      },
-      {
-        icon: '🤖',
-        title: 'Integrated AI APIs',
-        description: 'Connected Claude, OpenAI, and custom ML models to production applications.'
-      },
-      {
-        icon: '📊',
-        title: 'Built Real-time Dashboard',
-        description: 'Created live-updating analytics dashboards with WebSocket and Supabase Realtime.'
-      },
-      {
-        icon: '🥇',
-        title: 'Hackathon Winner',
-        description: 'Won a campus-wide hackathon with the Smart Campus Sustainability System.'
-      },
-      {
-        icon: '🚀',
-        title: 'Shipped 10+ Apps',
-        description: 'Delivered over 10 production-ready applications for clients and personal projects.'
-      },
-      {
-        icon: '📦',
-        title: 'Open Source Contributor',
-        description: 'Contributed to popular open source projects and shared my own tools with the community.'
-      }
-    ])
+    hero_tagline: 'Full-stack developer building AI-powered web apps',
+    availability_status: 'open',
+    availability_text: 'Available for freelance & full-time roles',
+    career_start_date: '2023-01',
+    show_phone: 'false',
+    show_map: 'false',
+    blog_min_posts: '1',
+    bg_video_enabled: 'true',
+    quick_info_enabled: 'true',
+    music_url: '',
+    music_title: '',
+    achievements: JSON.stringify(DEFAULT_ACHIEVEMENTS),
+    drive_cards: JSON.stringify(DEFAULT_DRIVE_CARDS),
   },
   loading: false,
   fetchSettings: async () => {
@@ -53,11 +36,14 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     try {
       const data = await api.settings.getAll();
       const obj: Record<string, string> = {};
-      data.forEach(s => obj[s.key] = s.value);
+      data.forEach((s) => (obj[s.key] = s.value));
       set((state) => ({ settings: { ...state.settings, ...obj }, loading: false }));
     } catch (e) {
       console.error('Failed to fetch settings', e);
       set({ loading: false });
     }
-  }
+  },
+  updateLocalSetting: (key: string, value: string) => {
+    set((state) => ({ settings: { ...state.settings, [key]: value } }));
+  },
 }));
