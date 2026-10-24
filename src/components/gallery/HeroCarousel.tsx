@@ -33,7 +33,8 @@ export default function HeroCarousel({
     setSubIndex(0);
   }, [activeCategory]);
 
-  const activeItem: GalleryItem | undefined = filteredItems[currentIndex];
+  const safeIndex = Math.min(currentIndex, Math.max(0, filteredItems.length - 1));
+  const activeItem: GalleryItem | undefined = filteredItems[safeIndex];
 
   // Comma-separated media urls
   const currentUrls = useMemo(() => {
@@ -70,8 +71,24 @@ export default function HeroCarousel({
       return;
     }
 
+    // If displayUrl is empty or already matches activeMediaUrl, update immediately
+    if (!displayUrl) {
+      setDisplayUrl(activeMediaUrl);
+    }
+    if (displayUrl === activeMediaUrl) {
+      setIsLoading(false);
+      return;
+    }
+
     const currentReq = ++decodeReqId.current;
     setIsLoading(true);
+
+    const timer = setTimeout(() => {
+      if (currentReq === decodeReqId.current) {
+        setDisplayUrl(activeMediaUrl);
+        setIsLoading(false);
+      }
+    }, 1800);
 
     const img = new Image();
     img.src = activeMediaUrl;
@@ -79,18 +96,24 @@ export default function HeroCarousel({
     img
       .decode()
       .then(() => {
+        clearTimeout(timer);
         if (currentReq === decodeReqId.current) {
           setDisplayUrl(activeMediaUrl);
           setIsLoading(false);
         }
       })
       .catch(() => {
+        clearTimeout(timer);
         if (currentReq === decodeReqId.current) {
           setDisplayUrl(activeMediaUrl);
           setIsLoading(false);
         }
       });
-  }, [activeMediaUrl, isVideo]);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [activeMediaUrl, isVideo, displayUrl]);
 
   // Preload previous and next photos
   useEffect(() => {
@@ -331,6 +354,7 @@ export default function HeroCarousel({
                     animation: 'shimmer 1.5s infinite linear',
                     backdropFilter: 'blur(4px)',
                     borderRadius: 14,
+                    pointerEvents: 'none',
                   }}
                 />
               )}

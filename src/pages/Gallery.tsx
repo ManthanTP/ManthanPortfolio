@@ -1,14 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { useDataStore } from '../stores/useDataStore';
 import HeroCarousel from '../components/gallery/HeroCarousel';
+import { api } from '../lib/api';
+import { DEMO_GALLERY } from '../lib/data';
 
 const CATEGORIES = ['All', 'UI Designs', 'Project Screenshots', 'Events'];
 
 export default function Gallery() {
   const [activeFilter, setActiveFilter] = useState('All');
-  const items = useDataStore((s) => s.gallery);
-  const status = useDataStore((s) => s.status.gallery);
+  const storeItems = useDataStore((s) => s.gallery);
+  const setGallery = useDataStore((s) => s.setGallery);
+  const [loading, setLoading] = useState(storeItems.length === 0);
+
+  useEffect(() => {
+    if (storeItems.length === 0) {
+      setLoading(true);
+      api.gallery
+        .getAll()
+        .then((data) => {
+          setGallery(data && data.length > 0 ? data : DEMO_GALLERY);
+        })
+        .catch((err) => {
+          console.error('Gallery load error:', err);
+          setGallery(DEMO_GALLERY);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [storeItems.length, setGallery]);
+
+  const items = storeItems.length > 0 ? storeItems : (loading ? [] : DEMO_GALLERY);
 
   return (
     <div className="section-container" style={{ paddingTop: 100, paddingBottom: 60 }}>
@@ -29,7 +52,7 @@ export default function Gallery() {
         </div>
       </ScrollReveal>
 
-      {status === 'loading' && items.length === 0 ? (
+      {loading && items.length === 0 ? (
         <div
           style={{
             maxWidth: 1300,

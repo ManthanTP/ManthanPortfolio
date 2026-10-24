@@ -1,17 +1,42 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { useDataStore } from '../stores/useDataStore';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { safeJsonParse } from '../lib/safeJson';
 import { DEFAULT_ACHIEVEMENTS } from '../lib/constants';
+import { DEMO_EXPERIENCE } from '../lib/data';
+import { api } from '../lib/api';
 
 export default function Experience() {
-  const experience = useDataStore((s) => s.experience);
-  const status = useDataStore((s) => s.status.experience);
+  const storeExperience = useDataStore((s) => s.experience);
+  const setExperience = useDataStore((s) => s.setExperience);
   const settings = useSettingsStore((s) => s.settings);
 
+  const [loading, setLoading] = useState(storeExperience.length === 0);
+
+  useEffect(() => {
+    if (storeExperience.length === 0) {
+      setLoading(true);
+      api.experience
+        .getAll()
+        .then((data) => {
+          setExperience(data && data.length > 0 ? data : DEMO_EXPERIENCE);
+        })
+        .catch((err) => {
+          console.error(err);
+          setExperience(DEMO_EXPERIENCE);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [storeExperience.length, setExperience]);
+
+  const activeExperience = storeExperience.length > 0 ? storeExperience : (loading ? [] : DEMO_EXPERIENCE);
   const achievements = safeJsonParse(settings.achievements, DEFAULT_ACHIEVEMENTS);
-  const workExp = experience.filter((e) => e.type !== 'achievement');
+  const filteredWorkExp = activeExperience.filter((e) => e.type !== 'achievement');
+  const workExp = filteredWorkExp.length > 0 ? filteredWorkExp : activeExperience;
 
   return (
     <div className="section-container" style={{ paddingTop: 100, paddingBottom: 100 }}>
@@ -46,8 +71,8 @@ export default function Experience() {
           }}
         />
 
-        {status === 'loading' && workExp.length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading experience...</p>
+        {loading && workExp.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '40px 0' }}>Loading experience...</p>
         ) : (
           workExp.map((exp, i) => (
             <div key={exp.id} style={{ position: 'relative', paddingBottom: 60, width: '100%' }} className="exp-timeline-item">

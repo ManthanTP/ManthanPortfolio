@@ -31,6 +31,13 @@ function App() {
   useEffect(() => {
     fetchSettings();
 
+    // If splash screen was already completed, ensure site data is hydrated
+    if (splashDone) {
+      import('./lib/preload').then(({ preloadSite }) => {
+        preloadSite().catch((err) => console.error('Background preload error:', err));
+      });
+    }
+
     // Analytics: Increment visit count once per session
     if (!sessionStorage.getItem('mp_has_visited')) {
       import('./lib/api').then(({ api }) => {
@@ -38,7 +45,7 @@ function App() {
       });
       sessionStorage.setItem('mp_has_visited', 'true');
     }
-  }, [fetchSettings]);
+  }, [fetchSettings, splashDone]);
 
   return (
     <BrowserRouter>

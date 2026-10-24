@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Fuse from 'fuse.js';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { useDataStore } from '../stores/useDataStore';
 import { IconSearch } from '../components/ui/Icons';
+import { api } from '../lib/api';
+import { DEMO_POSTS } from '../lib/data';
 
 const CATEGORIES = ['All', 'AI', 'Development', 'UI Design', 'Campus Innovation'];
 
@@ -12,8 +14,19 @@ export default function Blog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
 
-  const posts = useDataStore((s) => s.posts);
-  const status = useDataStore((s) => s.status.posts);
+  const storePosts = useDataStore((s) => s.posts);
+  const setPosts = useDataStore((s) => s.setPosts);
+
+  useEffect(() => {
+    if (storePosts.length === 0) {
+      api.posts
+        .getPublished()
+        .then((data) => setPosts(data && data.length > 0 ? data : DEMO_POSTS))
+        .catch(() => setPosts(DEMO_POSTS));
+    }
+  }, [storePosts.length, setPosts]);
+
+  const posts = storePosts.length > 0 ? storePosts : DEMO_POSTS;
 
   const fuse = useMemo(
     () =>
