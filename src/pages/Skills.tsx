@@ -1,129 +1,196 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
+import { useDataStore } from '../stores/useDataStore';
 import { api } from '../lib/api';
-import type { Skill } from '../lib/supabase';
-import { IconCode, IconFolder, IconImage, IconPen } from '../components/ui/Icons';
+import {
+  Code2,
+  Server,
+  Sparkles,
+  Palette,
+  Cloud,
+  Terminal,
+  Layers,
+  type LucideIcon,
+} from 'lucide-react';
 
 export default function Skills() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
+  const storeSkills = useDataStore((s) => s.skills);
+  const setSkills = useDataStore((s) => s.setSkills);
+  const [loading, setLoading] = useState(storeSkills.length === 0);
 
   useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const data = await api.skills.getAll();
-        setSkills(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchSkills();
-  }, []);
+    if (storeSkills.length === 0) {
+      api.skills
+        .getAll()
+        .then((data) => setSkills(data))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [storeSkills.length, setSkills]);
 
-  const categories = Array.from(new Set(skills.map(s => s.category)));
+  const categories = useMemo(() => {
+    return Array.from(new Set(storeSkills.map((s) => s.category).filter(Boolean)));
+  }, [storeSkills]);
 
-  // Helper to get an icon based on category name
-  const getCategoryIcon = (category: string) => {
+  // Distinct lucide icon per skill category
+  const getCategoryIcon = (category: string): LucideIcon => {
     const lower = category.toLowerCase();
-    if (lower.includes('frontend') || lower.includes('code') || lower.includes('development')) return <IconCode size={20} />;
-    if (lower.includes('design') || lower.includes('ui') || lower.includes('graphics')) return <IconPen size={20} />;
-    if (lower.includes('video') || lower.includes('media') || lower.includes('photo')) return <IconImage size={20} />;
-    return <IconFolder size={20} />;
+    if (lower.includes('frontend') || lower.includes('client') || lower.includes('web')) return Code2;
+    if (lower.includes('backend') || lower.includes('server') || lower.includes('api') || lower.includes('data')) return Server;
+    if (lower.includes('ai') || lower.includes('machine') || lower.includes('ml')) return Sparkles;
+    if (lower.includes('design') || lower.includes('ui') || lower.includes('creative')) return Palette;
+    if (lower.includes('cloud') || lower.includes('devops') || lower.includes('infra')) return Cloud;
+    if (lower.includes('tools') || lower.includes('git') || lower.includes('cli')) return Terminal;
+    return Layers;
   };
 
   return (
     <div className="section-container" style={{ paddingTop: 100, paddingBottom: 100 }}>
       <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 16 }}>
-            <div style={{ height: 1, width: 40, background: 'var(--accent-violet)' }} />
-            <h2 className="font-accent" style={{ color: 'var(--accent-violet)', fontSize: '0.85rem', letterSpacing: '2px', textTransform: 'uppercase' }}>
-              Skills
-            </h2>
-            <div style={{ height: 1, width: 40, background: 'var(--accent-violet)' }} />
+        <div style={{ textAlign: 'center', marginBottom: 54 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 14 }}>
+            <div style={{ height: 1, width: 36, background: 'var(--accent-violet)' }} />
+            <span
+              className="font-mono"
+              style={{
+                color: 'var(--accent-violet)',
+                fontSize: '0.8rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Capabilities
+            </span>
+            <div style={{ height: 1, width: 36, background: 'var(--accent-violet)' }} />
           </div>
 
-          <h1 className="font-hero" style={{ fontSize: 'clamp(2rem, 4vw, 2.5rem)', fontWeight: 800 }}>
-            Tools & Technologies I <span style={{ color: 'var(--accent-violet)' }}>Master</span>
-          </h1>
+          <h2
+            className="font-hero"
+            style={{ fontSize: 'clamp(2rem, 4.5vw, 2.8rem)', fontWeight: 800, letterSpacing: '-0.02em' }}
+          >
+            Technologies I <span className="neon-text">Work With</span>
+          </h2>
+          <p
+            className="font-heading"
+            style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: 480, margin: '10px auto 0' }}
+          >
+            A curated stack focused on performance, developer velocity, and robust user experience.
+          </p>
         </div>
       </ScrollReveal>
 
-      <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ width: '100%', maxWidth: 1160, margin: '0 auto' }}>
         {loading ? (
           <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Loading skills...</p>
         ) : (
-          <div className="skills-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-            {categories.map((cat, i) => (
-              <ScrollReveal key={cat} delay={i * 0.1}>
-                <motion.div
-                  whileHover={{ y: -10 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="glass-card"
-                  style={{
-                    borderRadius: 16,
-                    padding: 32,
-                    height: '100%',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    borderTop: '2px solid rgba(108, 99, 255, 0.3)'
-                  }}>
+          <div
+            className="skills-grid"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 20,
+            }}
+          >
+            {categories.map((cat, i) => {
+              const Icon = getCategoryIcon(cat);
+              const catSkills = storeSkills.filter((s) => s.category === cat);
 
-                  {/* Subtle inner glow */}
-                  <div style={{ position: 'absolute', top: -50, right: -50, width: 150, height: 150, background: 'radial-gradient(circle, rgba(108, 99, 255, 0.1) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-
-                  {/* Category Icon */}
+              return (
+                <ScrollReveal key={cat} delay={i * 0.08}>
                   <motion.div
-                    whileHover={{ rotate: 10, scale: 1.1 }}
+                    whileHover={{ y: -4 }}
+                    transition={{ duration: 0.2 }}
+                    className="glass-card"
                     style={{
-                      width: 56,
-                      height: 56,
                       borderRadius: 16,
-                      background: 'rgba(108, 99, 255, 0.1)',
+                      padding: 28,
+                      height: '100%',
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--accent-violet)',
-                      marginBottom: 24,
-                      boxShadow: '0 0 15px rgba(108, 99, 255, 0.2)'
-                    }}>
-                    {getCategoryIcon(cat)}
-                  </motion.div>
-
-                  {/* Category Title */}
-                  <h3 className="font-heading" style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 24, color: 'var(--text-primary)' }}>
-                    {cat}
-                  </h3>
-
-                  {/* Skills Pills */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {skills.filter(s => s.category === cat).map(skill => (
-                      <motion.div
-                        key={skill.id}
-                        whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 245, 212, 0.15)', borderColor: 'rgba(0, 245, 212, 0.5)', color: 'var(--accent-cyan)' }}
+                      flexDirection: 'column',
+                      borderTop: '2px solid rgba(108, 99, 255, 0.3)',
+                    }}
+                  >
+                    {/* Header with Distinct Category Icon */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+                      <div
                         style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          padding: '8px 16px',
-                          borderRadius: 20,
-                          fontSize: '0.85rem',
-                          fontWeight: 500,
-                          color: 'var(--text-secondary)',
-                          cursor: 'default',
-                          transition: 'all 0.2s ease'
+                          width: 44,
+                          height: 44,
+                          borderRadius: 12,
+                          background: 'rgba(108, 99, 255, 0.1)',
+                          border: '1px solid rgba(108, 99, 255, 0.25)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--accent-violet)',
+                          flexShrink: 0,
                         }}
                       >
-                        {skill.name}
-                      </motion.div>
-                    ))}
-                  </div>
+                        <Icon size={20} />
+                      </div>
+                      <h3
+                        className="font-heading"
+                        style={{
+                          fontSize: '1.18rem',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)',
+                          margin: 0,
+                        }}
+                      >
+                        {cat}
+                      </h3>
+                    </div>
 
-                </motion.div>
-              </ScrollReveal>
-            ))}
+                    {/* Skill Pills */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 'auto' }}>
+                      {catSkills.map((skill) => (
+                        <motion.div
+                          key={skill.id}
+                          whileHover={{
+                            scale: 1.04,
+                            backgroundColor: 'rgba(108, 99, 255, 0.15)',
+                            borderColor: 'var(--accent-violet)',
+                            color: '#ffffff',
+                          }}
+                          transition={{ duration: 0.15 }}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            padding: '6px 14px',
+                            borderRadius: 100,
+                            fontSize: '0.82rem',
+                            fontFamily: 'var(--font-heading)',
+                            fontWeight: 500,
+                            color: 'var(--text-secondary)',
+                            cursor: 'default',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}
+                        >
+                          <span>{skill.name}</span>
+                          {skill.proficiency && (
+                            <span
+                              className="font-mono"
+                              style={{
+                                fontSize: '0.7rem',
+                                color: 'var(--accent-cyan)',
+                                opacity: 0.8,
+                              }}
+                            >
+                              {skill.proficiency}%
+                            </span>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </ScrollReveal>
+              );
+            })}
           </div>
         )}
       </div>
