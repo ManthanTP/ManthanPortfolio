@@ -18,15 +18,23 @@ const NAV_LINKS = [
   { path: '#contact', label: 'Contact' },
 ];
 
+import { useDataStore } from '../../stores/useDataStore';
+
 export default function Navbar() {
   const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
   const settings = useSettingsStore(s => s.settings);
+  const posts = useDataStore(s => s.posts);
   const [scrolled, setScrolled] = useState(false);
+
+  const blogMinPosts = parseInt(settings.blog_min_posts ?? '1', 10);
+  const showBlog = blogMinPosts === 0 || posts.length >= blogMinPosts;
   
-  const visibleLinks = NAV_LINKS.filter(link => 
-    link.path !== '#resume' || settings.show_resume_section !== 'false'
-  );
+  const visibleLinks = NAV_LINKS.filter(link => {
+    if (link.path === '#resume' && settings.show_resume_section === 'false') return false;
+    if (link.path === '#blog' && !showBlog) return false;
+    return true;
+  });
   
   const activeSection = useActiveSection(visibleLinks.map(link => link.path.substring(1)));
 
