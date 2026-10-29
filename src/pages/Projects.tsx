@@ -1,450 +1,266 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { useDataStore } from '../stores/useDataStore';
 import { api } from '../lib/api';
 import type { Project } from '../lib/supabase';
-import { IconGithub, IconExternalLink } from '../components/ui/Icons';
-import { Sparkles, Layers } from 'lucide-react';
+import { DEMO_PROJECTS } from '../lib/data';
 
-const CATEGORIES = ['All', 'AI', 'Web Apps', 'Dashboards', 'Mobile'];
-
-interface ExtendedProject extends Project {
-  tagline?: string;
-  role?: string;
-  problem?: string;
-}
+const CATEGORIES = ['All', 'AI', 'Full Stack', 'Web'];
 
 export default function Projects() {
   const [activeFilter, setActiveFilter] = useState('All');
-  const [showAll, setShowAll] = useState(false);
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
-
-  // Read from cached data store
   const storeProjects = useDataStore((s) => s.projects);
   const setProjects = useDataStore((s) => s.setProjects);
-  const [localLoading, setLocalLoading] = useState(storeProjects.length === 0);
 
   useEffect(() => {
     if (storeProjects.length === 0) {
       api.projects
         .getVisible()
         .then((data) => {
-          setProjects(data);
+          setProjects(data && data.length > 0 ? data : DEMO_PROJECTS);
         })
-        .catch(console.error)
-        .finally(() => setLocalLoading(false));
-    } else {
-      setLocalLoading(false);
+        .catch(() => setProjects(DEMO_PROJECTS));
     }
   }, [storeProjects.length, setProjects]);
 
-  // Order with featured projects first
-  const sortedProjects = useMemo(() => {
-    const list = [...(storeProjects as ExtendedProject[])];
-    return list.sort((a, b) => {
-      if (a.featured && !b.featured) return -1;
-      if (!a.featured && b.featured) return 1;
-      return (a.order_index ?? 0) - (b.order_index ?? 0);
-    });
-  }, [storeProjects]);
+  const allProjects = storeProjects.length > 0 ? storeProjects : DEMO_PROJECTS;
 
-  // Filter logic
+  // Filter projects by category
   const filtered = useMemo(() => {
-    let result = sortedProjects;
-    if (activeFilter !== 'All') {
-      result = result.filter((p) => p.category?.includes(activeFilter));
-    }
-    // If not in showAll mode and activeFilter is 'All', limit to 4 featured/top projects
-    if (!showAll && activeFilter === 'All' && result.length > 4) {
-      return result.slice(0, 4);
-    }
-    return result;
-  }, [activeFilter, sortedProjects, showAll]);
+    if (activeFilter === 'All') return allProjects;
+    return allProjects.filter((p) =>
+      p.category
+        ? p.category.some((c) => c.toLowerCase().includes(activeFilter.toLowerCase()))
+        : false
+    );
+  }, [activeFilter, allProjects]);
 
-  const hasMoreThanFour = sortedProjects.length > 4 && activeFilter === 'All';
+  // Reel active index and progress timer
+  const [rcur, setRcur] = useState(0);
+  const [rp, setRp] = useState(0);
+  const [rHover, setRHover] = useState(false);
+  const [isSwapping, setIsSwapping] = useState(false);
+
+  // Keep index in bounds when filter changes
+  useEffect(() => {
+    setRcur(0);
+    setRp(0);
+  }, [activeFilter]);
+
+  const activeProject = filtered[rcur] || filtered[0] || ({} as Project);
+
+  // Auto-advance loop (~6.5s)
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    let rafId: number;
+    let last = performance.now();
+
+    const loop = (now: number) => {
+      const dt = Math.min(now - last, 64);
+      last = now;
+
+      if (!rHover && filtered.length > 1) {
+        setRp((prev) => {
+          const next = prev + (dt / 6500) * 100;
+          if (next >= 100) {
+            handleSelectProject((rcur + 1) % filtered.length);
+            return 0;
+          }
+          return next;
+        });
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [rHover, rcur, filtered.length]);
+
+  const handleSelectProject = (index: number) => {
+    if (index === rcur) return;
+    setIsSwapping(true);
+    setRp(0);
+    setTimeout(() => {
+      setRcur(index);
+      setIsSwapping(false);
+    }, 150);
+  };
+
+  const coverImage = activeProject.images?.[0] || '';
+  const primaryCategory = activeProject.category?.[0] || 'Production Application';
 
   return (
-    <div className="section-container" style={{ paddingTop: 100 }}>
+    <div className="section-container pt-20">
       <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <h2
-            className="font-hero"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, marginBottom: 12, letterSpacing: '-0.02em' }}
-          >
-            Featured <span className="neon-text">Projects</span>
-          </h2>
-          <p className="font-heading" style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: 520, margin: '0 auto' }}>
-            Production-grade systems, AI workflows, and digital experiences shipped with precision.
-          </p>
-        </div>
-      </ScrollReveal>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <span className="hk">Selected Work</span>
+            <h2 className="big text-4xl sm:text-5xl mt-2">
+              Engineering <em>Reel</em>
+            </h2>
+          </div>
 
-      {/* Filter Chips */}
-      <ScrollReveal>
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            overflowX: 'auto',
-            paddingBottom: 8,
-            marginBottom: 36,
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              className={`chip ${activeFilter === cat ? 'active' : ''}`}
-              onClick={() => {
-                setActiveFilter(cat);
-                setShowAll(true);
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </ScrollReveal>
-
-      {/* Project Cards Grid */}
-      {localLoading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-          <p className="font-heading" style={{ fontSize: '1rem' }}>Loading projects...</p>
-        </div>
-      ) : (
-        <>
-          <motion.div
-            layout
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 24,
-              maxWidth: 1200,
-              margin: '0 auto',
-              justifyContent: 'center', // Centers orphan last row
-            }}
-          >
-            <AnimatePresence mode="popLayout">
-              {filtered.map((project, i) => {
-                const isImgLoaded = loadedImages[project.id];
-                const coverImage =
-                  project.images && project.images.length > 0
-                    ? project.images[0]
-                    : 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800';
-
-                return (
-                  <motion.div
-                    key={project.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.94, y: 16 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.94 }}
-                    transition={{ duration: 0.35, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] as const }}
-                    whileHover={{ y: -6 }}
-                    className="project-card-wrapper"
-                    style={{
-                      borderRadius: 16,
-                      flex: '1 1 340px',
-                      maxWidth: '560px',
-                      minWidth: '300px',
-                    }}
-                  >
-                    <div
-                      className="glass-card"
-                      style={{
-                        overflow: 'hidden',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        position: 'relative',
-                        borderTop: project.featured
-                          ? '2px solid var(--accent-violet)'
-                          : '1px solid var(--border-color)',
-                      }}
-                    >
-                      {/* 16:10 Uniform Thumbnail */}
-                      <Link
-                        to={`/project/${project.slug}`}
-                        style={{
-                          textDecoration: 'none',
-                          color: 'inherit',
-                          display: 'block',
-                          position: 'relative',
-                          overflow: 'hidden',
-                          aspectRatio: '16/10',
-                          width: '100%',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                        }}
-                      >
-                        {/* Skeleton placeholder */}
-                        {!isImgLoaded && (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              background: 'linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 75%)',
-                              backgroundSize: '200% 100%',
-                              animation: 'shimmer 1.8s infinite',
-                            }}
-                          />
-                        )}
-
-                        <motion.img
-                          src={coverImage}
-                          alt={project.title}
-                          loading="lazy"
-                          onLoad={() => setLoadedImages((prev) => ({ ...prev, [project.id]: true }))}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                            opacity: isImgLoaded ? 1 : 0,
-                            transition: 'opacity 0.3s ease, transform 0.5s ease',
-                          }}
-                          whileHover={{ scale: 1.05 }}
-                        />
-
-                        <div
-                          style={{
-                            position: 'absolute',
-                            inset: 0,
-                            background: 'linear-gradient(to top, rgba(5,5,10,0.85) 0%, transparent 60%)',
-                            pointerEvents: 'none',
-                          }}
-                        />
-
-                        {/* Featured Badge: Shown ONLY when project.featured is true */}
-                        {project.featured && (
-                          <div
-                            className="font-accent"
-                            style={{
-                              position: 'absolute',
-                              top: 12,
-                              right: 12,
-                              background: 'rgba(108, 99, 255, 0.92)',
-                              backdropFilter: 'blur(8px)',
-                              color: '#fff',
-                              padding: '4px 10px',
-                              borderRadius: 6,
-                              fontSize: '0.65rem',
-                              letterSpacing: '1px',
-                              fontWeight: 700,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 4,
-                            }}
-                          >
-                            <Sparkles size={11} />
-                            FEATURED
-                          </div>
-                        )}
-                      </Link>
-
-                      {/* Content Area */}
-                      <div
-                        style={{
-                          padding: '24px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          flex: 1,
-                        }}
-                      >
-                        {/* Categories */}
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                          {(project.category || []).map((cat) => (
-                            <span
-                              key={cat}
-                              className="font-mono"
-                              style={{
-                                fontSize: '0.7rem',
-                                color: 'var(--accent-cyan)',
-                                background: 'rgba(0, 245, 212, 0.08)',
-                                padding: '2px 8px',
-                                borderRadius: 4,
-                              }}
-                            >
-                              {cat}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Title linking to details */}
-                        <Link to={`/project/${project.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <h3
-                            className="font-heading"
-                            style={{
-                              fontSize: '1.25rem',
-                              fontWeight: 700,
-                              marginBottom: 6,
-                              color: 'var(--text-primary)',
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {project.title}
-                          </h3>
-                        </Link>
-
-                        {/* Optional Tagline (Phase 7 field) */}
-                        {project.tagline && (
-                          <p
-                            style={{
-                              color: 'var(--accent-violet)',
-                              fontSize: '0.85rem',
-                              fontWeight: 500,
-                              marginBottom: 8,
-                            }}
-                          >
-                            {project.tagline}
-                          </p>
-                        )}
-
-                        {/* Description */}
-                        <p
-                          style={{
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.88rem',
-                            lineHeight: 1.6,
-                            marginBottom: 16,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {project.description}
-                        </p>
-
-                        {/* Optional Role or Problem snippets */}
-                        {project.role && (
-                          <div
-                            style={{
-                              fontSize: '0.78rem',
-                              color: 'var(--text-secondary)',
-                              marginBottom: 10,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                            }}
-                          >
-                            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Role:</span>
-                            <span>{project.role}</span>
-                          </div>
-                        )}
-
-                        {/* Tech Stack Tags */}
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-                          {(project.tech_stack || []).slice(0, 4).map((tech) => (
-                            <span
-                              key={tech.name}
-                              className="font-mono"
-                              style={{
-                                fontSize: '0.72rem',
-                                padding: '3px 9px',
-                                borderRadius: 6,
-                                background: 'rgba(255, 255, 255, 0.03)',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                color: 'var(--text-secondary)',
-                              }}
-                            >
-                              {tech.name}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Card Actions: Details, Live, GitHub */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginTop: 'auto',
-                            paddingTop: 14,
-                            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                          }}
-                        >
-                          <Link
-                            to={`/project/${project.slug}`}
-                            className="font-heading"
-                            style={{
-                              textDecoration: 'none',
-                              color: 'var(--accent-violet)',
-                              fontSize: '0.82rem',
-                              fontWeight: 600,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                            }}
-                          >
-                            Case Study →
-                          </Link>
-
-                          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                            {project.github_url && (
-                              <a
-                                href={project.github_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  color: 'var(--text-secondary)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  transition: 'color 0.2s',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                                title="View on GitHub"
-                                aria-label={`${project.title} GitHub repository`}
-                              >
-                                <IconGithub size={18} />
-                              </a>
-                            )}
-                            {project.live_url && (
-                              <a
-                                href={project.live_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  color: 'var(--text-secondary)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  transition: 'color 0.2s',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--accent-cyan)')}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-                                title="Live Demo"
-                                aria-label={`${project.title} live demo`}
-                              >
-                                <IconExternalLink size={18} />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </AnimatePresence>
-          </motion.div>
-
-          {/* "View All Projects" toggle on Home */}
-          {hasMoreThanFour && !showAll && (
-            <div style={{ textAlign: 'center', marginTop: 36 }}>
+          {/* Category Chips */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((cat) => (
               <button
-                onClick={() => setShowAll(true)}
-                className="btn-secondary"
-                style={{ padding: '10px 24px', fontSize: '0.9rem' }}
+                key={cat}
+                type="button"
+                onClick={() => setActiveFilter(cat)}
+                className={`px-4 py-1.5 rounded-full text-xs font-mono tracking-wider uppercase transition-all duration-200 ${
+                  activeFilter === cat
+                    ? 'bg-[#2C3480] text-white border border-[#7686f0]'
+                    : 'border border-[var(--hair)] text-[var(--ink2)] hover:text-white'
+                }`}
               >
-                <Layers size={16} /> View All Projects ({sortedProjects.length})
+                {cat}
               </button>
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Projects Reel Layout */}
+      <ScrollReveal delay={0.08}>
+        <div
+          className="reel"
+          onPointerEnter={() => setRHover(true)}
+          onPointerLeave={() => setRHover(false)}
+        >
+          {/* Left: Project List with timed border */}
+          <div className="rlist" id="rlist">
+            {filtered.map((proj, i) => {
+              const isActive = i === rcur;
+              return (
+                <button
+                  key={proj.id || proj.slug || i}
+                  type="button"
+                  data-prog-controlled="true"
+                  onClick={() => handleSelectProject(i)}
+                  className={`ritem card ${isActive ? 'active' : ''}`}
+                  style={
+                    {
+                      '--prog': isActive ? rp.toFixed(1) : '0',
+                    } as React.CSSProperties
+                  }
+                >
+                  <div className="n">{proj.title}</div>
+                  <div className="c">{proj.category?.[0] || 'Full Stack Application'}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Right: Big Project Panel Preview */}
+          <div className="card rpanel" id="rpanel" data-reel-panel="true">
+            <div className={`pane ${isSwapping ? 'swap' : ''}`}>
+              {/* Media Container */}
+              <div className="art">
+                {coverImage ? (
+                  <img
+                    src={coverImage}
+                    alt={activeProject.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-[var(--bg2)]">
+                    <span className="font-heading text-6xl text-[var(--amber)] opacity-30 font-black">
+                      {activeProject.title?.charAt(0) || 'P'}
+                    </span>
+                  </div>
+                )}
+                <span className="cat">{primaryCategory}</span>
+                <div className="big-n">{activeProject.title}</div>
+              </div>
+
+              {/* Project Body */}
+              <div className="pbody">
+                <div className="ttl">{activeProject.title}</div>
+
+                <p className="vs text-base leading-relaxed">
+                  {activeProject.description ||
+                    'Comprehensive full-stack architecture engineered for performance, security, and exceptional user delight.'}
+                </p>
+
+                {/* Tech Chips */}
+                {activeProject.tech_stack && activeProject.tech_stack.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {activeProject.tech_stack.map((tech) => (
+                      <span
+                        key={tech.name}
+                        className="px-2.5 py-1 rounded text-xs font-mono border border-[var(--hair)] text-[var(--ink2)]"
+                        style={{ background: 'rgba(var(--glow-rgb), 0.06)' }}
+                      >
+                        {tech.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Metric Facts Bento */}
+                <div className="facts">
+                  <div className="fact">
+                    <b>{activeProject.featured ? 'Featured' : 'Shipped'}</b>
+                    <span>Release Status</span>
+                  </div>
+                  <div className="fact">
+                    <b>{activeProject.tech_stack?.length || 4}+</b>
+                    <span>Core Technologies</span>
+                  </div>
+                  <div className="fact">
+                    <b>100%</b>
+                    <span>Responsive & Safe</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pb-actions pt-2">
+                  <Link
+                    to={`/project/${activeProject.slug}`}
+                    className="hbtn p"
+                  >
+                    View Project Details
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </Link>
+
+                  {activeProject.live_url && (
+                    <a
+                      href={activeProject.live_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hbtn"
+                    >
+                      Live Demo
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+                      </svg>
+                    </a>
+                  )}
+
+                  {activeProject.github_url && (
+                    <a
+                      href={activeProject.github_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hbtn"
+                    >
+                      Source Code
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </>
-      )}
+          </div>
+        </div>
+      </ScrollReveal>
     </div>
   );
 }

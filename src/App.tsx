@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import Layout from './components/layout/Layout';
 import QuickPanel from './components/ui/QuickPanel';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import { useGlobalCardGlow } from './hooks/useGlobalCardGlow';
 import Splash from './pages/Splash';
 import Home from './pages/Home';
 import ProjectDetail from './pages/ProjectDetail';
@@ -27,6 +28,7 @@ import {
 function App() {
   const { splashDone } = useAppStore();
   const fetchSettings = useSettingsStore((s) => s.fetchSettings);
+  useGlobalCardGlow();
 
   useEffect(() => {
     fetchSettings();

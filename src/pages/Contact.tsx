@@ -2,52 +2,23 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../components/ui/ScrollReveal';
-import {
-  IconSend,
-  IconCheck,
-  IconGithub,
-  IconLinkedin,
-  IconInstagram,
-  IconX,
-  IconEmail,
-  IconMapPin,
-  IconPhone,
-} from '../components/ui/Icons';
 import { api } from '../lib/api';
 import { useSettingsStore } from '../stores/useSettingsStore';
 
 const contactSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Valid email is required'),
-  subject: z.string().optional(),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
-  honeypot: z.string().max(0), // spam protection
+  name: z.string().min(1, 'Enter your name.'),
+  email: z.string().email('Enter a valid email address.'),
+  message: z.string().min(10, 'Write at least 10 characters.'),
+  honeypot: z.string().max(0),
 });
 
 type ContactForm = z.infer<typeof contactSchema>;
 
-const socialIconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  github: IconGithub,
-  linkedin: IconLinkedin,
-  instagram: IconInstagram,
-  x: IconX,
-  email: IconEmail,
-};
-
 export default function Contact() {
   const settings = useSettingsStore((s) => s.settings);
-
-  const dynamicSocialLinks = [
-    { name: 'GitHub', url: settings.social_github, icon: 'github', color: '#fff' },
-    { name: 'LinkedIn', url: settings.social_linkedin, icon: 'linkedin', color: '#0A66C2' },
-    { name: 'X / Twitter', url: settings.social_x, icon: 'x', color: '#fff' },
-    { name: 'Instagram', url: settings.social_instagram, icon: 'instagram', color: '#E4405F' },
-  ].filter((link) => !!link.url);
-
-  const [submitted, setSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const {
     register,
@@ -56,431 +27,248 @@ export default function Contact() {
     formState: { errors, isSubmitting },
   } = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { honeypot: '', name: '', email: '', subject: '', message: '' },
+    defaultValues: { honeypot: '', name: '', email: '', message: '' },
   });
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const onSubmit = async (data: ContactForm) => {
     try {
       await api.messages.create({
         name: data.name,
         email: data.email,
-        subject: data.subject || '',
+        subject: 'Portfolio Contact Form',
         body: data.message,
       });
-      setSubmitted(true);
-      setToastMessage('Message sent successfully!');
-      setTimeout(() => setToastMessage(null), 4000);
+      showToast('Message sent! Saved to inbox.');
       reset();
     } catch (err) {
       console.error(err);
-      setToastMessage('Failed to send message. Please try again.');
-      setTimeout(() => setToastMessage(null), 4000);
+      showToast('Failed to send message. Please try again.');
     }
   };
 
+  const copyEmail = () => {
+    const email = settings.social_email || 'manthantp0321@gmail.com';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).then(() => {
+        setCopySuccess(true);
+        showToast('Email address copied!');
+        setTimeout(() => setCopySuccess(false), 2500);
+      });
+    } else {
+      showToast(email);
+    }
+  };
+
+  const showMap = settings.show_map !== 'false';
   const showPhone = settings.show_phone === 'true';
-  const showMap = settings.show_map === 'true';
 
   return (
-    <div className="section-container" style={{ paddingTop: 100 }}>
+    <div className="section-container pt-20 pb-28">
+      {/* Toast Alert */}
       {toastMessage && (
         <div
           role="status"
-          aria-live="polite"
-          style={{
-            position: 'fixed',
-            top: 80,
-            right: 20,
-            background: 'var(--surface-elevated)',
-            border: '1px solid var(--accent-cyan)',
-            color: 'var(--text-primary)',
-            padding: '12px 20px',
-            borderRadius: 10,
-            zIndex: 100,
-            boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
-            fontSize: '0.9rem',
-            fontFamily: 'var(--font-heading)',
-          }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-lg border border-[var(--amber)] bg-[var(--bg2)] text-[var(--ink)] shadow-2xl text-sm font-mono tracking-wide"
         >
           {toastMessage}
         </div>
       )}
 
+      {/* ─── Contact Section ─── */}
       <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h1 className="font-hero" style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, marginBottom: 12 }}>
-            Let's <span className="neon-text">Connect</span>
-          </h1>
-          <p className="font-heading" style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
-            Got a question, proposal, or project in mind? Drop me a message
-          </p>
+        <div className="contact mb-20">
+          {/* Left Column */}
+          <div className="cl">
+            <span className="hk">Connect</span>
+            <div className="big font-black uppercase text-5xl sm:text-6xl text-[var(--ink)]">
+              Let's build something <em>resilient</em>.
+            </div>
+
+            <p className="vs text-base leading-relaxed max-w-lg">
+              Have an opening, an ambitious AI integration, or an engineering challenge that needs decisive ownership? Send a message or copy my direct email.
+            </p>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <span className="text-xs font-mono tracking-wider uppercase text-[var(--ink2)]">
+                Direct Email
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="mail">{settings.social_email || 'manthantp0321@gmail.com'}</span>
+                <button
+                  type="button"
+                  onClick={copyEmail}
+                  className="px-3 py-1 rounded text-xs font-mono tracking-wider uppercase border border-[var(--hair)] hover:border-[var(--amber)] text-[var(--ink)] transition-colors"
+                >
+                  {copySuccess ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+
+              {showPhone && (
+                <div className="pt-2">
+                  <span className="text-xs font-mono tracking-wider uppercase text-[var(--ink2)]">
+                    Phone
+                  </span>
+                  <div className="text-sm font-mono text-[var(--amber)] mt-0.5">
+                    +91 9686335075
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Form */}
+          <div className="card form">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+              <input type="text" {...register('honeypot')} className="hidden" tabIndex={-1} />
+
+              <div className={`fld ${errors.name ? 'bad' : ''}`}>
+                <input
+                  id="contact-name"
+                  type="text"
+                  placeholder=" "
+                  {...register('name')}
+                />
+                <label htmlFor="contact-name">Your Name</label>
+                {errors.name && <p className="err">{errors.name.message}</p>}
+              </div>
+
+              <div className={`fld ${errors.email ? 'bad' : ''}`}>
+                <input
+                  id="contact-email"
+                  type="email"
+                  placeholder=" "
+                  {...register('email')}
+                />
+                <label htmlFor="contact-email">Email Address</label>
+                {errors.email && <p className="err">{errors.email.message}</p>}
+              </div>
+
+              <div className={`fld ${errors.message ? 'bad' : ''}`}>
+                <textarea
+                  id="contact-message"
+                  placeholder=" "
+                  {...register('message')}
+                />
+                <label htmlFor="contact-message">Message or Project Brief</label>
+                {errors.message && <p className="err">{errors.message.message}</p>}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="hbtn p w-full justify-center text-center mt-2"
+              >
+                {isSubmitting ? 'Sending Message...' : 'Send Message'}
+              </button>
+            </form>
+          </div>
         </div>
       </ScrollReveal>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr',
-          gap: 36,
-          maxWidth: 1000,
-          margin: '0 auto',
-        }}
-        className="contact-grid"
-      >
-        {/* Contact Form */}
-        <ScrollReveal>
-          <div className="glass-card" style={{ padding: 32 }}>
-            <AnimatePresence mode="wait">
-              {!submitted ? (
-                <motion.form
-                  key="form"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onSubmit={handleSubmit(onSubmit)}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+      {/* ─── Location & Schematic Hubballi Map ─── */}
+      {showMap && (
+        <ScrollReveal delay={0.08}>
+          <div className="loc">
+            {/* Location Info */}
+            <div className="card locinfo">
+              <div>
+                <span className="hk">Base</span>
+                <div className="big">Hubballi, India</div>
+                <p className="vs mt-2">
+                  Operating out of Karnataka, India. Available worldwide for remote technical engineering, system architecture, and production frontend work.
+                </p>
+              </div>
+
+              <div>
+                <div className="flex flex-wrap gap-4 text-sm font-mono uppercase text-[var(--ink2)] mb-4">
+                  <div>
+                    <span className="opacity-60 mr-1.5">Zone</span>
+                    <b className="text-[var(--ink)]">IST · UTC+5:30</b>
+                  </div>
+                  <div>
+                    <span className="opacity-60 mr-1.5">Coords</span>
+                    <b className="text-[var(--ink)]">15.36° N, 75.12° E</b>
+                  </div>
+                </div>
+
+                <a
+                  href="https://maps.google.com/?q=Hubballi,Karnataka"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hbtn p"
                 >
-                  {/* Honeypot */}
-                  <input
-                    type="text"
-                    {...register('honeypot')}
-                    style={{ display: 'none' }}
-                    tabIndex={-1}
-                    autoComplete="off"
-                  />
+                  Open in Maps
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" />
+                  </svg>
+                </a>
+              </div>
+            </div>
 
-                  <div>
-                    <label
-                      htmlFor="contact-name"
-                      className="font-heading"
-                      style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginBottom: 8 }}
-                    >
-                      Name *
-                    </label>
-                    <input
-                      id="contact-name"
-                      {...register('name')}
-                      placeholder="Your name"
-                      className="font-body"
-                      aria-invalid={!!errors.name}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: 10,
-                        border: `1px solid ${errors.name ? '#ff4444' : 'var(--border-color)'}`,
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.9rem',
-                        outline: 'none',
-                        transition: 'border-color 0.2s',
-                      }}
-                    />
-                    {errors.name && (
-                      <p role="alert" style={{ color: '#ff4444', fontSize: '0.75rem', marginTop: 4 }}>
-                        {errors.name.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="contact-email"
-                      className="font-heading"
-                      style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginBottom: 8 }}
-                    >
-                      Email *
-                    </label>
-                    <input
-                      id="contact-email"
-                      {...register('email')}
-                      type="email"
-                      placeholder="your@email.com"
-                      className="font-body"
-                      aria-invalid={!!errors.email}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: 10,
-                        border: `1px solid ${errors.email ? '#ff4444' : 'var(--border-color)'}`,
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.9rem',
-                        outline: 'none',
-                      }}
-                    />
-                    {errors.email && (
-                      <p role="alert" style={{ color: '#ff4444', fontSize: '0.75rem', marginTop: 4 }}>
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="contact-subject"
-                      className="font-heading"
-                      style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginBottom: 8 }}
-                    >
-                      Subject
-                    </label>
-                    <input
-                      id="contact-subject"
-                      {...register('subject')}
-                      placeholder="What's this about?"
-                      className="font-body"
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: 10,
-                        border: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.9rem',
-                        outline: 'none',
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="contact-message"
-                      className="font-heading"
-                      style={{ fontSize: '0.85rem', fontWeight: 500, display: 'block', marginBottom: 8 }}
-                    >
-                      Message *
-                    </label>
-                    <textarea
-                      id="contact-message"
-                      {...register('message')}
-                      placeholder="Tell me about your project or question..."
-                      rows={5}
-                      className="font-body"
-                      aria-invalid={!!errors.message}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: 10,
-                        border: `1px solid ${errors.message ? '#ff4444' : 'var(--border-color)'}`,
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)',
-                        fontSize: '0.9rem',
-                        outline: 'none',
-                        resize: 'vertical',
-                      }}
-                    />
-                    {errors.message && (
-                      <p role="alert" style={{ color: '#ff4444', fontSize: '0.75rem', marginTop: 4 }}>
-                        {errors.message.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <motion.button
-                    type="submit"
-                    disabled={isSubmitting}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="btn-primary"
-                    style={{
-                      width: '100%',
-                      justifyContent: 'center',
-                      padding: '14px',
-                      opacity: isSubmitting ? 0.7 : 1,
-                      marginTop: 10,
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {isSubmitting ? (
-                      <span>Sending message...</span>
-                    ) : (
-                      <>
-                        <IconSend size={16} /> Send Message
-                      </>
-                    )}
-                  </motion.button>
-                </motion.form>
-              ) : (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  style={{ textAlign: 'center', padding: '60px 20px' }}
-                >
-                  <div
-                    style={{
-                      width: 72,
-                      height: 72,
-                      borderRadius: '50%',
-                      background: 'rgba(0,245,212,0.1)',
-                      border: '2px solid var(--accent-cyan)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 20px',
-                      color: 'var(--accent-cyan)',
-                    }}
-                  >
-                    <IconCheck size={36} />
-                  </div>
-                  <h2 className="font-heading" style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 8, color: 'var(--accent-cyan)' }}>
-                    Message Sent!
-                  </h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: 20 }}>
-                    Thanks for reaching out. I'll get back to you shortly.
-                  </p>
-                  <button
-                    onClick={() => setSubmitted(false)}
-                    className="btn-secondary"
-                    style={{ fontSize: '0.85rem', padding: '8px 18px' }}
-                  >
-                    Send another message
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Schematic SVG Map of Hubballi */}
+            <div className="card mapc">
+              <svg
+                viewBox="0 0 640 380"
+                role="img"
+                aria-label="Schematic map of Hubballi, Karnataka, with Dharwad to the northwest"
+              >
+                <rect className="mbg" width="640" height="380" />
+                <path
+                  className="mland"
+                  d="M30 60 C120 20 240 40 300 90 C360 140 330 220 260 250 C190 280 90 270 50 210 C20 160 10 100 30 60z"
+                />
+                <path
+                  className="mland"
+                  d="M390 150 C470 110 580 130 610 200 C630 260 560 330 470 330 C400 330 360 260 390 150z"
+                />
+                <path
+                  className="mwater"
+                  d="M470 226 q30 -24 66 -6 q20 20 -8 38 q-42 14 -58 -32z"
+                />
+                <path
+                  className="road hw"
+                  d="M-10 262 C120 240 220 200 330 188 S540 120 650 84"
+                />
+                <path className="road" d="M330 188 C340 250 330 310 350 390" />
+                <path
+                  className="road sm"
+                  d="M0 140 C90 160 170 130 250 160 S400 240 480 390"
+                />
+                <path
+                  className="road sm"
+                  d="M200 -10 C210 60 190 110 200 170 S250 300 230 390"
+                />
+                <path className="road sm" d="M420 -10 C430 60 400 110 380 150" />
+                <circle cx="196" cy="122" r="6" fill="var(--ink2)" />
+                <text className="mt1" x="208" y="120">
+                  DHARWAD
+                </text>
+                <text className="mt1" x="468" y="96" transform="rotate(-9 468 96)">
+                  NH 48
+                </text>
+                <circle className="pr" cx="352" cy="190" r="14" />
+                <circle className="pr p2" cx="352" cy="190" r="14" />
+                <circle className="pin" cx="352" cy="190" r="9" />
+                <text className="mt2" x="372" y="222">
+                  Hubballi
+                </text>
+                <text className="mt1" x="372" y="240">
+                  15.36° N · 75.12° E
+                </text>
+                <path d="M600 40 l8 22 l-8 -6 l-8 6z" fill="var(--ink2)" />
+                <text className="mt1" x="594" y="82">
+                  N
+                </text>
+              </svg>
+            </div>
           </div>
         </ScrollReveal>
-
-        {/* Info Side */}
-        <div>
-          {/* Social Links */}
-          {dynamicSocialLinks.length > 0 && (
-            <ScrollReveal>
-              <div className="glass-card" style={{ padding: 24, marginBottom: 20 }}>
-                <h3 className="font-heading" style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: 16 }}>
-                  Find Me Online
-                </h3>
-                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                  {dynamicSocialLinks.map((link) => {
-                    const Icon = socialIconMap[link.icon];
-                    return (
-                      <motion.a
-                        key={link.name}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ y: -4 }}
-                        whileTap={{ scale: 0.95 }}
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 12,
-                          border: '1px solid var(--border-color)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--text-secondary)',
-                          textDecoration: 'none',
-                          transition: 'color 0.2s, border-color 0.2s',
-                        }}
-                        aria-label={link.name}
-                      >
-                        {Icon && <Icon size={20} />}
-                      </motion.a>
-                    );
-                  })}
-                </div>
-              </div>
-            </ScrollReveal>
-          )}
-
-          {/* Direct Contact Info */}
-          <ScrollReveal delay={0.05}>
-            <div className="glass-card" style={{ padding: 24, marginBottom: 20 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <a
-                  href="mailto:manthantp0321@gmail.com"
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none' }}
-                >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      background: 'rgba(234, 67, 53, 0.12)',
-                      color: '#EA4335',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid rgba(234, 67, 53, 0.2)',
-                    }}
-                  >
-                    <IconEmail size={20} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 2 }}>Email Me</div>
-                    <span className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      manthantp0321@gmail.com
-                    </span>
-                  </div>
-                </a>
-
-                {showPhone && (
-                  <a
-                    href="tel:+919686335075"
-                    style={{ display: 'flex', alignItems: 'center', gap: 14, textDecoration: 'none' }}
-                  >
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: 'rgba(108, 99, 255, 0.12)',
-                        color: 'var(--accent-violet)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid rgba(108, 99, 255, 0.2)',
-                      }}
-                    >
-                      <IconPhone size={20} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 2 }}>Call Me</div>
-                      <span className="font-heading" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        +91 9686335075
-                      </span>
-                    </div>
-                  </a>
-                )}
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* Location / Map */}
-          <ScrollReveal delay={0.1}>
-            <div className="glass-card" style={{ overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <IconMapPin size={18} style={{ color: 'var(--accent-cyan)' }} />
-                <div>
-                  <span className="font-heading" style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-                    Hubballi, Karnataka, India
-                  </span>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>IST (UTC+5:30)</p>
-                </div>
-              </div>
-
-              {showMap && (
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d123011.53507005436!2d75.0560724555029!3d15.35019808389658!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bb8d73b0632a9e3%3A0xc47b99c0d54025d2!2sHubballi%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1"
-                  width="100%"
-                  height="180"
-                  style={{ border: 0, display: 'block' }}
-                  allowFullScreen
-                  loading="lazy"
-                  title="Hubballi Map Location"
-                />
-              )}
-            </div>
-          </ScrollReveal>
-        </div>
-      </div>
-
-      <style>{`
-        @media (min-width: 768px) {
-          .contact-grid { grid-template-columns: 1.25fr 0.75fr !important; }
-        }
-      `}</style>
+      )}
     </div>
   );
 }

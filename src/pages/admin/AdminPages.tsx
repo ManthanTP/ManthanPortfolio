@@ -1225,6 +1225,28 @@ export function SiteSettings() {
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [darkDim, setDarkDim] = useState<{ width: number; height: number } | null>(null);
+  const [lightDim, setLightDim] = useState<{ width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (settings.hero_portrait_dark) {
+      const img = new Image();
+      img.onload = () => setDarkDim({ width: img.naturalWidth, height: img.naturalHeight });
+      img.src = settings.hero_portrait_dark;
+    } else {
+      setDarkDim(null);
+    }
+  }, [settings.hero_portrait_dark]);
+
+  useEffect(() => {
+    if (settings.hero_portrait_light) {
+      const img = new Image();
+      img.onload = () => setLightDim({ width: img.naturalWidth, height: img.naturalHeight });
+      img.src = settings.hero_portrait_light;
+    } else {
+      setLightDim(null);
+    }
+  }, [settings.hero_portrait_light]);
 
   useEffect(() => {
     api.settings.getAll().then(data => {
@@ -1391,7 +1413,7 @@ export function SiteSettings() {
           </div>
 
           <div style={{ gridColumn: 'span 2' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Profile Image URL</label>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Profile Image URL (Navbar & Fallback)</label>
             <div style={{ display: 'flex', gap: 10 }}>
               <input
                 type="text"
@@ -1418,6 +1440,94 @@ export function SiteSettings() {
                 style={{ fontSize: '0.8rem', width: 140 }}
               />
             </div>
+          </div>
+
+          {/* Hero Portrait Dark Mode */}
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>
+              Hero Portrait URL (Dark Mode) — Cinematic cutout (recommended ≥ 1280px wide)
+            </label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text"
+                value={settings.hero_portrait_dark || ''}
+                onChange={e => handleChange('hero_portrait_dark', e.target.value)}
+                placeholder="https://... (or upload below)"
+                className="admin-input"
+                style={{ flex: 1 }}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    try {
+                      const url = await api.storage.uploadFile(e.target.files[0], 'portfolio-media', 'hero');
+                      handleChange('hero_portrait_dark', url);
+                      showToast('Dark hero portrait uploaded!');
+                    } catch (err: any) {
+                      alert(err.message || 'Upload failed');
+                    }
+                  }
+                }}
+                style={{ fontSize: '0.8rem', width: 140 }}
+              />
+            </div>
+            {darkDim && (
+              <div style={{ marginTop: 6, fontSize: '0.78rem', color: darkDim.width < 1280 ? '#f4a738' : '#00f5d4' }}>
+                Detected dimensions: {darkDim.width} × {darkDim.height}px
+                {darkDim.width < 1280 && ' — ⚠️ For sharp cinematic display on desktop, upload an image ≥ 1280px wide.'}
+              </div>
+            )}
+            {settings.hero_portrait_dark && (
+              <div style={{ marginTop: 8, width: 80, height: 110, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-color)', background: '#030409' }}>
+                <img src={settings.hero_portrait_dark} alt="Dark Hero Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+            )}
+          </div>
+
+          {/* Hero Portrait Light Mode */}
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>
+              Hero Portrait URL (Light Mode) — Optional light cutout (falls back to dark portrait)
+            </label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input
+                type="text"
+                value={settings.hero_portrait_light || ''}
+                onChange={e => handleChange('hero_portrait_light', e.target.value)}
+                placeholder="https://... (or upload below)"
+                className="admin-input"
+                style={{ flex: 1 }}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    try {
+                      const url = await api.storage.uploadFile(e.target.files[0], 'portfolio-media', 'hero');
+                      handleChange('hero_portrait_light', url);
+                      showToast('Light hero portrait uploaded!');
+                    } catch (err: any) {
+                      alert(err.message || 'Upload failed');
+                    }
+                  }
+                }}
+                style={{ fontSize: '0.8rem', width: 140 }}
+              />
+            </div>
+            {lightDim && (
+              <div style={{ marginTop: 6, fontSize: '0.78rem', color: lightDim.width < 1280 ? '#f4a738' : '#00f5d4' }}>
+                Detected dimensions: {lightDim.width} × {lightDim.height}px
+                {lightDim.width < 1280 && ' — ⚠️ For sharp cinematic display on desktop, upload an image ≥ 1280px wide.'}
+              </div>
+            )}
+            {settings.hero_portrait_light && (
+              <div style={{ marginTop: 8, width: 80, height: 110, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-color)', background: '#f6f6fb' }}>
+                <img src={settings.hero_portrait_light} alt="Light Hero Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              </div>
+            )}
           </div>
 
           <div style={{ gridColumn: 'span 2' }}>

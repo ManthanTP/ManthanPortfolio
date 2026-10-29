@@ -1,61 +1,135 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import ScrollReveal from '../components/ui/ScrollReveal';
-import AnimatedCounter from '../components/ui/AnimatedCounter';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useDataStore } from '../stores/useDataStore';
 import { safeJsonParse } from '../lib/safeJson';
 import {
   DEFAULT_ABOUT_STATS,
-  DEFAULT_DRIVE_CARDS,
   type DriveCardItem,
   type StatItem,
 } from '../lib/constants';
-import {
-  Palette,
-  Cpu,
-  Users,
-  Layers,
-  Sparkles,
-  Rocket,
-  Code2,
-  ShieldCheck,
-  Compass,
-  ArrowUpRight,
-  type LucideIcon,
-} from 'lucide-react';
 
-const iconMap: Record<string, LucideIcon> = {
-  Palette,
-  Cpu,
-  Users,
-  Layers,
-  Sparkles,
-  Rocket,
-  Code: Code2,
-  Code2,
-  Shield: ShieldCheck,
-  ShieldCheck,
-  Compass,
-};
+const DEFAULT_VALUES = [
+  {
+    n: 'Problem solving',
+    t: 'Take a messy real-world workflow, find the one decision that unblocks it, and turn that into a system people trust.',
+    go: 'projects',
+    pf: 'InstitutePulse',
+    ic: 'M3 19a2 2 0 104 0 2 2 0 10-4 0M17 5a2 2 0 104 0 2 2 0 10-4 0M7 19c6 0 4-10 10-14',
+  },
+  {
+    n: 'Creativity',
+    t: 'Interfaces that feel designed, not assembled. Balancing fluid motion with crisp predictability.',
+    go: 'projects',
+    pf: 'Pocket Ledger',
+    ic: 'M12 3l7 7-7 11-7-11 7-7zM12 3v9',
+  },
+  {
+    n: 'Innovation',
+    t: 'Use AI only where it removes real work. Connecting LLM tool-calling to verifiable operational bottlenecks.',
+    go: 'projects',
+    pf: 'Meditrip',
+    ic: 'M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z',
+  },
+  {
+    n: 'Leadership',
+    t: 'Own the technical delivery when teammates and live production events rely on it under zero-tolerance latency.',
+    go: 'experience',
+    pf: 'GCL live auction',
+    ic: 'M5 21V4M5 4h11l-2 4 2 4H5',
+  },
+];
 
 export default function About() {
   const settings = useSettingsStore((s) => s.settings);
   const projects = useDataStore((s) => s.projects);
 
-  // Safe parse What Drives Me bento cards
+  // Safe parse What Drives Me cards or fallback
   const driveCards = useMemo(() => {
-    return safeJsonParse<DriveCardItem[]>(settings.drive_cards, DEFAULT_DRIVE_CARDS);
+    const raw = safeJsonParse<DriveCardItem[]>(settings.drive_cards, []);
+    if (raw && raw.length >= 3) {
+      return raw.map((item, i) => ({
+        n: item.title,
+        t: item.statement,
+        go: 'projects',
+        pf: item.proof_label || 'View Work',
+        ic: DEFAULT_VALUES[i % DEFAULT_VALUES.length].ic,
+      }));
+    }
+    return DEFAULT_VALUES;
   }, [settings.drive_cards]);
 
-  // Safe parse About stats or default to live visible-projects count
+  // Stacked cards state
+  const [sFront, setSFront] = useState(0);
+  const [sHover, setSHover] = useState(false);
+  const [sp2, setSp2] = useState(0);
+  const stackRef = useRef<HTMLDivElement>(null);
+
+  // 3D Tilt on Stack
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    const el = stackRef.current;
+    if (!el) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / window.innerWidth;
+      const dy = (e.clientY - (r.top + r.height / 2)) / window.innerHeight;
+      setTilt({ rx: parseFloat((dx * 16).toFixed(1)), ry: parseFloat((-dy * 16).toFixed(1)) });
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    return () => window.removeEventListener('pointermove', handlePointerMove);
+  }, []);
+
+  // Timer loop for auto-advance (~6s)
+  useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    let rafId: number;
+    let last = performance.now();
+
+    const loop = (now: number) => {
+      const dt = Math.min(now - last, 64);
+      last = now;
+
+      if (!sHover) {
+        setSp2((prev) => {
+          const next = prev + (dt / 6000) * 100;
+          if (next >= 100) {
+            setSFront((curr) => (curr + 1) % driveCards.length);
+            return 0;
+          }
+          return next;
+        });
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
+  }, [sHover, driveCards.length]);
+
+  const selectCard = (index: number) => {
+    setSFront(index);
+    setSp2(0);
+  };
+
+  const handleProofClick = (targetId: string) => {
+    const el = document.getElementById(targetId);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Safe parse About stats
   const stats = useMemo<StatItem[]>(() => {
     if (settings.about_stats) {
       const parsed = safeJsonParse<StatItem[]>(settings.about_stats, []);
       if (parsed.length > 0) return parsed;
     }
-    // Default fallback with live visible projects count
     return DEFAULT_ABOUT_STATS.map((item) => {
       if (item.label.toLowerCase().includes('project')) {
         return { ...item, value: projects.length > 0 ? projects.length : item.value };
@@ -64,379 +138,166 @@ export default function About() {
     });
   }, [settings.about_stats, projects.length]);
 
-  const aboutText =
-    settings.about_text ||
-    "I'm a full-stack engineer and AI builder dedicated to shipping fast, reliable, and accessible applications. I specialize in React, Node.js, modern cloud architectures, and production AI integrations that solve tangible user problems.";
-
-  // Mouse spotlight border tracking
-  const [spotlightPos, setSpotlightPos] = useState({ x: 0, y: 0, activeIndex: -1 });
-
   return (
-    <div className="section-container" style={{ paddingTop: 100 }}>
-      {/* Section Header */}
+    <div className="section-container pt-20">
+      {/* ─── About Story & Philosophy ─── */}
       <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 54 }}>
-          <h2
-            className="font-hero"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, marginBottom: 12, letterSpacing: '-0.02em' }}
-          >
-            About <span className="neon-text">Me</span>
-          </h2>
-          <p
-            className="font-heading"
-            style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: 480, margin: '0 auto' }}
-          >
-            Philosophy, driving principles, and empirical track record.
-          </p>
-        </div>
-      </ScrollReveal>
-
-      {/* Profile Card & Bio Story */}
-      <ScrollReveal>
-        <div
-          className="glass-card"
-          style={{
-            padding: '36px 32px',
-            maxWidth: 820,
-            margin: '0 auto 64px',
-            position: 'relative',
-            overflow: 'hidden',
-            borderTop: '2px solid rgba(108, 99, 255, 0.3)',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 28, alignItems: 'center' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 24,
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}
-            >
-              <div
-                style={{
-                  width: 90,
-                  height: 90,
-                  borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--accent-violet), var(--accent-cyan))',
-                  padding: 2.5,
-                  position: 'relative',
-                }}
-              >
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: 'var(--bg-secondary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {settings.profile_image_url ? (
-                    <img
-                      src={settings.profile_image_url}
-                      alt="Manthan Patel"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <span className="font-accent" style={{ fontSize: '2rem', color: 'var(--accent-violet)' }}>
-                      M
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div style={{ textAlign: 'center' }}>
-                <h3
-                  className="font-heading"
-                  style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: 6, color: 'var(--text-primary)' }}
-                >
-                  Manthan Patel
-                </h3>
-                <p
-                  style={{
-                    color: 'var(--accent-cyan)',
-                    fontSize: '0.85rem',
-                    background: 'rgba(0, 245, 212, 0.08)',
-                    padding: '4px 14px',
-                    borderRadius: 20,
-                    fontFamily: 'var(--font-heading)',
-                    display: 'inline-block',
-                  }}
-                >
-                  "Building things that make a difference — one line of code at a time."
-                </p>
-              </div>
+        <div className="about">
+          <div className="bio">
+            <span className="hk">Philosophy</span>
+            <div className="big">
+              Designing software with <em>clear intent</em> and zero bloat.
             </div>
+            <p className="vs text-base leading-relaxed">
+              {settings.about_text ||
+                "I'm an engineer who cares deeply about the intersection of human workflows and deterministic architecture. From building live sports auction consoles to campus operations platforms and AI assistants, I build systems that are responsive, accessible, and resilient under real-world pressure."}
+            </p>
+          </div>
 
-            {/* Story Bio */}
-            <div
-              style={{
-                color: 'var(--text-secondary)',
-                lineHeight: 1.8,
-                fontSize: '0.98rem',
-                whiteSpace: 'pre-line',
-                maxWidth: 720,
-              }}
-            >
-              {aboutText}
-            </div>
+          {/* Mini Stats Bento */}
+          <div className="mini">
+            {stats.slice(0, 3).map((st) => (
+              <div key={st.label} className="card">
+                <b>
+                  {st.value}
+                  {st.suffix}
+                </b>
+                <span className="text-xs font-mono tracking-widest uppercase text-muted">
+                  {st.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </ScrollReveal>
 
-      {/* "What Drives Me" Bento Grid */}
-      <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <h3 className="font-heading" style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 8 }}>
-            What Drives Me
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Core principles backed by delivered production work.
-          </p>
-        </div>
-      </ScrollReveal>
+      {/* ─── What Drives Me: Stack of Value Screens ─── */}
+      <ScrollReveal delay={0.1}>
+        <div className="vals">
+          {/* Left Values List */}
+          <div className="vleft">
+            <span className="hk">Values</span>
+            <div className="big">
+              What <em>drives</em> me
+            </div>
+            <p className="vs">
+              Principles honed across live production auctions, distributed campus systems, and AI workflows.
+            </p>
 
-      <div
-        className="bento-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(1, 1fr)',
-          gap: 16,
-          maxWidth: 960,
-          margin: '0 auto 64px',
-        }}
-      >
-        {driveCards.map((card, i) => {
-          const IconComponent = iconMap[card.icon] || Sparkles;
-          const isLarge = i === 0;
-
-          return (
-            <ScrollReveal key={card.title + i} delay={i * 0.08}>
-              <motion.div
-                whileHover={{ y: -4 }}
-                transition={{ duration: 0.2 }}
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setSpotlightPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, activeIndex: i });
-                }}
-                onMouseLeave={() => setSpotlightPos((p) => ({ ...p, activeIndex: -1 }))}
-                className={`glass-card bento-card ${isLarge ? 'bento-large' : ''}`}
-                style={{
-                  padding: isLarge ? '32px' : '26px',
-                  borderRadius: 16,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  outline: 'none',
-                  border: '1px solid var(--border-color)',
-                  background:
-                    spotlightPos.activeIndex === i
-                      ? `radial-gradient(circle 180px at ${spotlightPos.x}px ${spotlightPos.y}px, rgba(108, 99, 255, 0.12), var(--glass-bg))`
-                      : 'var(--glass-bg)',
-                  transition: 'border-color 0.2s ease, background 0.2s ease',
-                }}
-                tabIndex={0}
-              >
-                <div>
-                  {/* Icon & Category Header */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 16,
-                    }}
+            <div className="vlist">
+              {driveCards.map((v, i) => (
+                <button
+                  key={v.n}
+                  type="button"
+                  onClick={() => selectCard(i)}
+                  className={`vl ${i === sFront ? 'on' : ''}`}
+                >
+                  <span>{v.n}</span>
+                  <svg
+                    className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
                   >
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 12,
-                        background: 'rgba(108, 99, 255, 0.12)',
-                        border: '1px solid rgba(108, 99, 255, 0.25)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--accent-violet)',
-                      }}
-                    >
-                      <IconComponent size={22} />
-                    </div>
-                    {isLarge && (
-                      <span
-                        className="font-mono"
-                        style={{
-                          fontSize: '0.7rem',
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: 'var(--accent-cyan)',
-                          background: 'rgba(0, 245, 212, 0.08)',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                        }}
-                      >
-                        Core Focus
-                      </span>
-                    )}
-                  </div>
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </div>
 
-                  {/* Title */}
-                  <h4
-                    className="font-heading"
-                    style={{
-                      fontSize: isLarge ? '1.35rem' : '1.15rem',
-                      fontWeight: 700,
-                      color: 'var(--text-primary)',
-                      marginBottom: 8,
-                    }}
-                  >
-                    {card.title}
-                  </h4>
-
-                  {/* One-line statement */}
-                  <p
-                    style={{
-                      color: 'var(--text-secondary)',
-                      fontSize: isLarge ? '0.96rem' : '0.88rem',
-                      lineHeight: 1.6,
-                      marginBottom: 20,
-                    }}
-                  >
-                    {card.statement}
-                  </p>
-                </div>
-
-                {/* Proof Link pointing to project */}
-                {card.project_slug && (
-                  <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                    <Link
-                      to={`/project/${card.project_slug}`}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        textDecoration: 'none',
-                        fontSize: '0.82rem',
-                        fontFamily: 'var(--font-heading)',
-                        fontWeight: 600,
-                        color: 'var(--accent-cyan)',
-                        transition: 'gap 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = 'var(--text-primary)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = 'var(--accent-cyan)';
-                      }}
-                    >
-                      <span>Proof: {card.proof_label || 'View Case Study'}</span>
-                      <ArrowUpRight size={14} />
-                    </Link>
-                  </div>
-                )}
-              </motion.div>
-            </ScrollReveal>
-          );
-        })}
-      </div>
-
-      {/* "By The Numbers" Stats Grid */}
-      <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h3 className="font-heading" style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 6 }}>
-            By The Numbers
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
-            Tangible benchmarks of production output.
-          </p>
-        </div>
-      </ScrollReveal>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: 16,
-          maxWidth: 640,
-          margin: '0 auto',
-        }}
-        className="about-stats-grid"
-      >
-        {stats.map((stat, i) => (
-          <ScrollReveal key={stat.label + i} delay={i * 0.08}>
-            <motion.div
-              whileHover={{ y: -3 }}
-              className="glass-card"
-              style={{
-                padding: '24px 20px',
-                textAlign: 'center',
-                borderTop: '2px solid rgba(108, 99, 255, 0.3)',
-              }}
+          {/* Right Stacked Window Cards with 3D Tilt */}
+          <div className="stackwrap">
+            <div
+              ref={stackRef}
+              id="stack"
+              className="stack"
+              onPointerEnter={() => setSHover(true)}
+              onPointerLeave={() => setSHover(false)}
+              style={
+                {
+                  '--rx': `${tilt.rx}deg`,
+                  '--ry': `${tilt.ry}deg`,
+                } as React.CSSProperties
+              }
             >
-              <div
-                className="font-accent"
-                style={{
-                  fontSize: '2.2rem',
-                  fontWeight: 700,
-                  color: 'var(--accent-violet)',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-              </div>
-              <div
-                className="font-heading"
-                style={{
-                  fontSize: '0.82rem',
-                  color: 'var(--text-secondary)',
-                  marginTop: 6,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                {stat.label}
-              </div>
-            </motion.div>
-          </ScrollReveal>
-        ))}
-      </div>
+              {driveCards.map((v, i) => {
+                const pos = (i - sFront + driveCards.length) % driveCards.length;
+                const posStr = pos > 2 ? 'h' : String(pos);
+                const isFront = pos === 0;
 
-      <style>{`
-        @media (min-width: 768px) {
-          .bento-grid {
-            grid-template-columns: repeat(3, 1fr) !important;
-          }
-          .bento-large {
-            grid-column: span 3 !important;
-          }
-        }
-        @media (min-width: 1024px) {
-          .bento-grid {
-            grid-template-columns: 1.2fr 1fr 1fr !important;
-            grid-template-rows: auto auto !important;
-          }
-          .bento-large {
-            grid-column: 1 !important;
-            grid-row: span 2 !important;
-          }
-          .about-stats-grid {
-            grid-template-columns: repeat(4, 1fr) !important;
-            max-width: 860px !important;
-          }
-        }
-        .bento-card:focus-visible {
-          border-color: var(--accent-violet) !important;
-          box-shadow: 0 0 0 2px var(--accent-violet) !important;
-        }
-      `}</style>
+                return (
+                  <div
+                    key={v.n}
+                    className="card scr"
+                    data-pos={posStr}
+                    data-prog-controlled="true"
+                    role="button"
+                    tabIndex={pos > 2 ? -1 : 0}
+                    aria-label={`Show ${v.n}`}
+                    onClick={() => selectCard(i)}
+                    style={
+                      {
+                        '--c1': '#7686f0',
+                        '--prog': isFront ? sp2.toFixed(1) : posStr === 'h' ? '0' : '100',
+                      } as React.CSSProperties
+                    }
+                  >
+                    <div className="in">
+                      <div className="tb">
+                        <i />
+                        <i />
+                        <i />
+                        <span>what drives me · 0{i + 1}</span>
+                      </div>
+
+                      <div className="vc">
+                        <div className="vi">
+                          <svg
+                            className="w-5 h-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d={v.ic} />
+                          </svg>
+                        </div>
+
+                        <div className="vt">{v.n}</div>
+                        <p className="vs">{v.t}</p>
+
+                        <div className="vp">
+                          <span className="text-xs font-mono tracking-wider uppercase text-muted">
+                            Proof
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProofClick(v.go);
+                            }}
+                            className="text-xs font-mono text-indigo-400 hover:text-indigo-300 underline tracking-wide uppercase transition-colors"
+                          >
+                            {v.pf} →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </ScrollReveal>
     </div>
   );
 }

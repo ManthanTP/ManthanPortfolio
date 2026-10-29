@@ -187,6 +187,26 @@ export default function AdminDashboard() {
           }
         });
 
+        // 9. Hero portrait check
+        if (!settings.hero_portrait_dark && !settings.profile_image_url) {
+          healthIssues.push({
+            id: 'hero-portrait-missing',
+            message: 'No high-resolution hero portrait uploaded. Dark/Light cinematic hero uses fallback initials.',
+            link: '/admin/settings',
+            linkText: 'Upload Portrait',
+          });
+        }
+
+        // 10. Resume PDF check
+        if (!settings.resume_url) {
+          healthIssues.push({
+            id: 'resume-missing',
+            message: 'No resume PDF linked. Download button in hero and header will show placeholder notification.',
+            link: '/admin/resume',
+            linkText: 'Upload Resume',
+          });
+        }
+
         setWarnings(healthIssues);
       } catch (e) {
         console.error('Failed to compute dashboard health', e);
