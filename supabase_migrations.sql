@@ -63,3 +63,11 @@ VALUES
   ('hero_portrait_light', ''),
   ('drive_cards', '[{"icon":"Sparkles","title":"Problem solving","statement":"Take a messy real-world workflow, find the one decision that unblocks it, and turn that into a system people trust.","proof_label":"InstitutePulse","project_slug":"institutepulse"},{"icon":"Palette","title":"Creativity","statement":"Interfaces that feel designed, not assembled. Balancing fluid motion with crisp predictability.","proof_label":"Pocket Ledger","project_slug":"pocket-ledger"},{"icon":"Cpu","title":"Innovation","statement":"Use AI only where it removes real work. Connecting LLM tool-calling to verifiable operational bottlenecks.","proof_label":"Meditrip","project_slug":"meditrip"},{"icon":"Compass","title":"Leadership","statement":"Own the technical delivery when teammates and live production events rely on it under zero-tolerance latency.","proof_label":"GCL live auction","project_slug":"gcl"}]')
 ON CONFLICT (key) DO NOTHING;
+
+-- 6. Add metrics column to projects and tag column to skills
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS metrics JSONB;
+ALTER TABLE public.skills ADD COLUMN IF NOT EXISTS tag TEXT;
+
+-- 7. Normalize project title typos
+UPDATE public.projects SET title = 'InstitutePulse' WHERE title ILIKE '%Institute Pulse%';
+UPDATE public.projects SET title = 'Suraksha.pro' WHERE title ILIKE '%Suraksha .pro%';

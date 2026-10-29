@@ -40,6 +40,14 @@ function App() {
       });
     }
 
+    // Scroll restoration manual to prevent unwanted auto-jumps
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Lock body scroll during splash loader
+    document.body.style.overflow = splashDone ? '' : 'hidden';
+
     // Analytics: Increment visit count once per session
     if (!sessionStorage.getItem('mp_has_visited')) {
       import('./lib/api').then(({ api }) => {

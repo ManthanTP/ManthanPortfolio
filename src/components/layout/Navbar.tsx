@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useThemeStore } from '../../stores/useThemeStore';
-import { IconSun, IconMoon, IconMenu, IconX } from '../ui/Icons';
+import { IconMenu, IconX } from '../ui/Icons';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { useSettingsStore } from '../../stores/useSettingsStore';
 import { useDataStore } from '../../stores/useDataStore';
@@ -24,7 +24,6 @@ export default function Navbar() {
   const location = useLocation();
   const settings = useSettingsStore((s) => s.settings);
   const posts = useDataStore((s) => s.posts);
-  const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const blogMinPosts = parseInt(settings.blog_min_posts ?? '1', 10);
@@ -37,14 +36,6 @@ export default function Navbar() {
   });
 
   const activeSection = useActiveSection(visibleLinks.map((link) => link.path.substring(1)));
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (location.pathname === '/') {
@@ -59,122 +50,109 @@ export default function Navbar() {
   };
 
   return (
-    <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-      style={{
-        background: scrolled ? 'var(--nav)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(16px)' : 'none',
-        WebkitBackdropFilter: scrolled ? 'blur(16px)' : 'none',
-        borderBottom: scrolled ? '1px solid var(--hair)' : '1px solid transparent',
-      }}
-    >
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 h-[68px] flex items-center justify-between">
-        {/* Logo: Circular crop of face + cobalt ring + MP */}
-        <Link
-          to="/"
-          className="flex items-center gap-2.5 group no-underline"
-          aria-label="Manthan Patel Portfolio Home"
+    <header className="sticky top-0 z-40 px-3 sm:px-4 py-3 pointer-events-auto">
+      <div className="max-w-[1120px] mx-auto">
+        <nav
+          className="flex items-center justify-between gap-3 px-3 sm:px-4 py-2 rounded-[14px] border border-[var(--hair)] transition-all duration-300"
+          style={{
+            background: 'var(--nav)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+          }}
+          aria-label="Main"
         >
-          <div
-            className="w-9 h-9 rounded-full overflow-hidden border-2 transition-transform duration-300 group-hover:scale-105 flex items-center justify-center"
-            style={{
-              borderColor: 'var(--amber)',
-              background: 'radial-gradient(circle at 30% 25%, #2C3480, #0a0c1b 72%)',
-            }}
+          {/* Logo: Circular crop of face + cobalt ring + MP */}
+          <a
+            href="#home"
+            onClick={(e) => handleNavClick(e, '#home')}
+            className="flex items-center gap-2.5 group no-underline flex-shrink-0"
+            aria-label="Manthan Patel, home"
           >
-            {settings.profile_image_url ? (
+            <div
+              className="w-[38px] h-[38px] rounded-full overflow-hidden border-2 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+              style={{
+                borderColor: 'var(--amber)',
+                background: 'radial-gradient(circle at 50% 30%, #2C3480, #05060d 75%)',
+              }}
+            >
               <img
-                src={settings.profile_image_url}
+                src="/hero/hero-portrait-dark.webp"
                 alt="Manthan Patel"
-                className="w-full h-full object-cover rounded-full"
+                className="w-full h-full object-cover object-top scale-125"
               />
-            ) : (
-              <b className="font-heading text-xs text-white">MP</b>
-            )}
+            </div>
+            <span
+              className="font-heading text-[26px] leading-none font-black tracking-wide text-[var(--amber)]"
+            >
+              MP
+            </span>
+          </a>
+
+          {/* Desktop Nav Links */}
+          <ul className="hidden md:flex items-center gap-1 list-none p-0 m-0 flex-1 justify-center overflow-x-auto min-w-0">
+            {visibleLinks.map((link) => {
+              const isActive =
+                location.pathname === '/'
+                  ? (activeSection === link.path.substring(1) || (!activeSection && link.path === '#home'))
+                  : location.pathname === link.path;
+
+              return (
+                <li key={link.path}>
+                  <a
+                    href={location.pathname === '/' ? link.path : `/${link.path}`}
+                    onClick={(e) => handleNavClick(e, link.path)}
+                    className="block px-3 py-1.5 rounded-lg text-[13px] font-sans font-medium whitespace-nowrap transition-colors duration-200 no-underline"
+                    style={{
+                      color: isActive ? 'var(--ink)' : 'var(--ink2)',
+                      background: isActive ? 'rgba(var(--glow-rgb), 0.14)' : 'transparent',
+                    }}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Right actions: Theme Toggle & Mobile Menu Button */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-10 h-10 rounded-full border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.16)] transition-colors flex-shrink-0 cursor-pointer"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={theme}
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {theme === 'dark' ? (
+                    <svg className="w-5 h-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+              className="md:hidden w-10 h-10 rounded-full border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.16)] transition-colors cursor-pointer"
+            >
+              {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
+            </button>
           </div>
-          <span
-            className="font-heading text-2xl font-black tracking-wider transition-colors duration-200"
-            style={{ color: 'var(--ink)' }}
-          >
-            MP
-          </span>
-        </Link>
-
-        {/* Desktop Nav Links */}
-        <div className="hidden lg:flex items-center gap-1">
-          {visibleLinks.map((link) => {
-            const isActive =
-              location.pathname === '/'
-                ? activeSection === link.path.substring(1)
-                : location.pathname === link.path;
-
-            return (
-              <a
-                key={link.path}
-                href={location.pathname === '/' ? link.path : `/${link.path}`}
-                onClick={(e) => handleNavClick(e, link.path)}
-                className="no-underline px-3.5 py-1.5 rounded-md text-xs font-mono font-medium tracking-wider uppercase transition-all duration-200"
-                style={{
-                  color: isActive ? 'var(--amber)' : 'var(--ink2)',
-                  background: isActive ? 'rgba(var(--glow-rgb), 0.12)' : 'transparent',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = 'var(--ink)';
-                    e.currentTarget.style.background = 'rgba(var(--glow-rgb), 0.06)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.color = 'var(--ink2)';
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
-              >
-                {link.label}
-              </a>
-            );
-          })}
-        </div>
-
-        {/* Right actions: Theme Toggle & Mobile Menu Button */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
-            style={{
-              background: 'rgba(var(--glow-rgb), 0.08)',
-              border: '1px solid var(--hair)',
-              color: 'var(--ink)',
-            }}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={theme}
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {theme === 'dark' ? <IconSun size={17} /> : <IconMoon size={17} />}
-              </motion.div>
-            </AnimatePresence>
-          </button>
-
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle navigation menu"
-            className="lg:hidden w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
-            style={{
-              background: 'rgba(var(--glow-rgb), 0.08)',
-              border: '1px solid var(--hair)',
-              color: 'var(--ink)',
-            }}
-          >
-            {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
-          </button>
-        </div>
+        </nav>
       </div>
 
       {/* Mobile Menu Dropdown */}
@@ -184,13 +162,14 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden border-b overflow-hidden"
+            className="md:hidden max-w-[1120px] mx-auto mt-2 rounded-[14px] border border-[var(--hair)] overflow-hidden"
             style={{
               background: 'var(--bg2)',
-              borderColor: 'var(--hair)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
             }}
           >
-            <div className="px-6 py-4 flex flex-col gap-2">
+            <div className="p-3 flex flex-col gap-1">
               {visibleLinks.map((link) => {
                 const isActive =
                   location.pathname === '/'
@@ -201,10 +180,10 @@ export default function Navbar() {
                     key={link.path}
                     href={location.pathname === '/' ? link.path : `/${link.path}`}
                     onClick={(e) => handleNavClick(e, link.path)}
-                    className="no-underline py-2.5 px-3 rounded text-sm font-mono tracking-wider uppercase transition-colors"
+                    className="no-underline py-2.5 px-3 rounded-lg text-sm font-sans font-medium transition-colors"
                     style={{
-                      color: isActive ? 'var(--amber)' : 'var(--ink2)',
-                      background: isActive ? 'rgba(var(--glow-rgb), 0.12)' : 'transparent',
+                      color: isActive ? 'var(--ink)' : 'var(--ink2)',
+                      background: isActive ? 'rgba(var(--glow-rgb), 0.14)' : 'transparent',
                     }}
                   >
                     {link.label}
@@ -215,6 +194,6 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </header>
   );
 }

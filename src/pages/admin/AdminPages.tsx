@@ -18,6 +18,7 @@ export function ProjectsManager() {
     techStackRaw?: string;
     imagesRaw?: string;
     featuresRaw?: string;
+    metricsRaw?: string;
   };
   const [formData, setFormData] = useState<ProjectFormData>({
     title: '', slug: '', description: '', visible: true, featured: false, order_index: 0, tagline: '', role: '', problem: ''
@@ -41,14 +42,30 @@ export function ProjectsManager() {
 
   const handleSave = async () => {
     try {
-      const { techStackRaw, imagesRaw, featuresRaw, ...dataToSave } = formData;
+      const { techStackRaw, imagesRaw, featuresRaw, metricsRaw, ...rest } = formData;
+      let metricsParsed = undefined;
+      if (metricsRaw && metricsRaw.trim()) {
+        try {
+          metricsParsed = JSON.parse(metricsRaw);
+        } catch {
+          metricsParsed = metricsRaw.split('\n').filter(Boolean).map(l => {
+            const parts = l.split(/[:|]/);
+            return {
+              label: (parts[1] || parts[0] || '').trim(),
+              value: (parts[0] || '').trim(),
+            };
+          });
+        }
+      }
+      const dataToSave = { ...rest, ...(metricsParsed ? { metrics: metricsParsed } : {}) };
+
       if (editingId) {
         await api.projects.update(editingId, dataToSave);
       } else {
         await api.projects.create(dataToSave as Omit<Project, 'id' | 'created_at' | 'updated_at'>);
       }
       setEditingId(null);
-      setFormData({ title: '', slug: '', description: '', visible: true, featured: false, order_index: 0, tagline: '', role: '', problem: '', techStackRaw: undefined, imagesRaw: undefined, featuresRaw: undefined });
+      setFormData({ title: '', slug: '', description: '', visible: true, featured: false, order_index: 0, tagline: '', role: '', problem: '', techStackRaw: undefined, imagesRaw: undefined, featuresRaw: undefined, metricsRaw: undefined });
       loadProjects();
     } catch (err) {
       console.error(err);
@@ -90,7 +107,8 @@ export function ProjectsManager() {
       ...p, 
       techStackRaw: undefined, 
       imagesRaw: undefined, 
-      featuresRaw: undefined 
+      featuresRaw: undefined,
+      metricsRaw: (p as any).metrics ? JSON.stringify((p as any).metrics, null, 2) : ''
     });
   };
 
@@ -188,6 +206,17 @@ export function ProjectsManager() {
               onChange={e => setFormData({...formData, featuresRaw: e.target.value, features: e.target.value.split('\n').filter(s => s.trim() !== '')})} 
               className="admin-input" 
               style={{ width: '100%', minHeight: 100 }} 
+            />
+          </div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', marginBottom: 6, color: 'var(--text-secondary)' }}>Project Metrics (JSON array or lines of "Value | Label")</label>
+            <textarea 
+              placeholder='[{"label": "Release Status", "value": "Shipped"}, {"label": "Tech Stack", "value": "4+ Core"}]' 
+              value={formData.metricsRaw !== undefined ? formData.metricsRaw : ''} 
+              onChange={e => setFormData({...formData, metricsRaw: e.target.value})} 
+              className="admin-input" 
+              style={{ width: '100%', minHeight: 70, fontFamily: 'monospace', fontSize: '0.85rem' }} 
             />
           </div>
           
@@ -990,6 +1019,7 @@ export function SkillsManager() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <input placeholder="Name (e.g. React)" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="admin-input" />
           <input placeholder="Category (e.g. Frontend)" value={formData.category || ''} onChange={e => setFormData({...formData, category: e.target.value})} className="admin-input" />
+          <input placeholder="Tag (e.g. UI, language, styling, build, AI, platform)" value={(formData as any).tag || ''} onChange={e => setFormData({...formData, tag: e.target.value} as any)} className="admin-input" style={{ gridColumn: 'span 2' }} />
           <div style={{ gridColumn: 'span 2' }}>
             <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Proficiency: {formData.proficiency}%</label>
             <input type="range" min="1" max="100" value={formData.proficiency || 50} onChange={e => setFormData({...formData, proficiency: parseInt(e.target.value)})} style={{ width: '100%', marginTop: 8 }} />

@@ -34,50 +34,37 @@ export default function Gallery() {
   const items = storeItems.length > 0 ? storeItems : (loading ? [] : DEMO_GALLERY);
 
   return (
-    <div className="section-container" style={{ paddingTop: 100, paddingBottom: 60 }}>
+    <div className="section-container sec">
       <ScrollReveal>
-        <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <h1
-            className="font-hero"
-            style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 800, marginBottom: 12 }}
-          >
-            <span className="neon-text">Gallery</span>
-          </h1>
-          <p
-            className="font-heading"
-            style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: 600, margin: '0 auto' }}
-          >
-            Visual showcase of my work, event highlights, and milestones
-          </p>
+        <div className="sh flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <div>
+            <span className="eyebrow">Gallery</span>
+            <h2>MOMENTS AND SCREENS</h2>
+          </div>
+
+          {/* Pill filter buttons */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveFilter(cat)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-mono tracking-wider uppercase transition-all duration-200 cursor-pointer ${
+                  activeFilter === cat
+                    ? 'bg-[#2C3480] text-white border border-[#7686f0]'
+                    : 'border border-[var(--hair)] text-[var(--ink2)] hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </ScrollReveal>
 
       {loading && items.length === 0 ? (
-        <div
-          style={{
-            maxWidth: 1300,
-            margin: '0 auto',
-            borderRadius: 20,
-            height: 520,
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: 0.6,
-          }}
-        >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              border: '3px solid var(--border-color)',
-              borderTopColor: 'var(--accent-violet)',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-            }}
-          />
-          <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+        <div className="card h-[400px] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-[var(--hair)] border-t-[var(--amber)] animate-spin" />
         </div>
       ) : (
         <ScrollReveal delay={0.1}>

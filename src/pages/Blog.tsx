@@ -43,25 +43,36 @@ export default function Blog() {
     return fuse.search(searchQuery).map((r) => r.item);
   }, [searchQuery, fuse, posts]);
 
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'Recent';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const year = d.getFullYear();
+      if (year > 2099 || year < 1990) return 'Recent';
+      return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return 'Recent';
+    }
+  };
+
   return (
-    <div className="section-container pt-20">
+    <div className="section-container sec">
       <ScrollReveal>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="sh flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <span className="hk">Writing</span>
-            <h2 className="big text-4xl sm:text-5xl mt-2">
-              Engineering <em>Notes</em>
-            </h2>
+            <span className="eyebrow">Writing</span>
+            <h2>BLOG</h2>
           </div>
 
-          {/* Search Input */}
-          <div className="w-full md:w-72">
+          {/* Search Input: 260px right-aligned */}
+          <div className="w-full sm:w-[260px]">
             <input
               type="text"
               placeholder="Search articles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-[var(--bg2)] border border-[var(--hair)] text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--amber)]"
+              className="w-full px-3.5 py-2 rounded-lg bg-[var(--bg2)] border border-[var(--hair)] text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--amber)]"
             />
           </div>
         </div>
@@ -69,15 +80,15 @@ export default function Blog() {
 
       {/* Blog Cards Grid */}
       <ScrollReveal delay={0.08}>
-        <div className="blog">
-          {filtered.map((post, i) => (
+        <div className="blog grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filtered.slice(0, 3).map((post, i) => (
             <Link
               key={post.id || post.slug}
               to={`/blog/${post.slug}`}
-              className="card post no-underline block group"
+              className="card post no-underline block group p-3.5 transition-transform duration-300 hover:-translate-y-1"
             >
               <div
-                className="cover"
+                className="cover max-h-[170px] aspect-[16/8] relative overflow-hidden rounded-[10px]"
                 style={{ background: GRADIENTS[i % GRADIENTS.length] }}
               >
                 {post.cover_url && (
@@ -87,22 +98,28 @@ export default function Blog() {
                     className="w-full h-full object-cover"
                   />
                 )}
-                <span>0{i + 1}</span>
+                <span className="absolute left-3.5 bottom-2.5 font-heading text-2xl font-black text-white uppercase">
+                  0{i + 1}
+                </span>
               </div>
 
-              <div className="pb">
-                <div className="pm">
-                  <span>{post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}</span>
-                  <span>{post.read_time || '5 min read'}</span>
+              <div className="pb pt-3">
+                <div className="pm flex items-center justify-between text-xs font-mono text-[var(--ink2)] mb-1">
+                  <span>{formatDate(post.published_at)}</span>
+                  <span>{post.read_time ? `${post.read_time} min read` : '5 min read'}</span>
                 </div>
 
-                <div className="text-xl font-heading font-black uppercase text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors mt-1">
+                <div className="text-lg font-heading font-black uppercase text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors line-clamp-2">
                   {post.title}
                 </div>
 
-                <p className="vs text-sm line-clamp-2 mt-1">
+                <p className="vs text-sm line-clamp-2 mt-1.5 text-[var(--ink2)]">
                   {post.excerpt || 'Technical breakdown, architecture patterns, and key takeaways.'}
                 </p>
+
+                <div className="pt-2 text-xs font-mono text-[var(--amber)] font-medium">
+                  Read post →
+                </div>
               </div>
             </Link>
           ))}

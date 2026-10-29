@@ -124,31 +124,43 @@ export default function About() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Safe parse About stats
+  // Safe parse About stats (filtering out empty, zero, or "New Stat" defaults)
   const stats = useMemo<StatItem[]>(() => {
+    let raw: StatItem[] = [];
     if (settings.about_stats) {
-      const parsed = safeJsonParse<StatItem[]>(settings.about_stats, []);
-      if (parsed.length > 0) return parsed;
+      raw = safeJsonParse<StatItem[]>(settings.about_stats, []);
     }
-    return DEFAULT_ABOUT_STATS.map((item) => {
-      if (item.label.toLowerCase().includes('project')) {
-        return { ...item, value: projects.length > 0 ? projects.length : item.value };
-      }
-      return item;
-    });
+    if (!raw || raw.length === 0) {
+      raw = DEFAULT_ABOUT_STATS;
+    }
+    return raw
+      .map((item) => {
+        if (item.label.toLowerCase().includes('project')) {
+          return { ...item, value: projects.length > 0 ? projects.length : item.value };
+        }
+        return item;
+      })
+      .filter((st) => {
+        const lbl = (st.label || '').trim().toLowerCase();
+        if (!lbl || lbl.includes('new stat') || lbl.includes('new_stat')) return false;
+        const val = String(st.value ?? '').trim();
+        if (!val || val === '0') return false;
+        return true;
+      });
   }, [settings.about_stats, projects.length]);
 
   return (
-    <div className="section-container pt-20">
+    <div className="section-container sec">
       {/* ─── About Story & Philosophy ─── */}
       <ScrollReveal>
+        <div className="sh">
+          <span className="eyebrow">About</span>
+          <h2>DESIGNING SYSTEMS WITH INTENT</h2>
+        </div>
+
         <div className="about">
           <div className="bio">
-            <span className="hk">Philosophy</span>
-            <div className="big">
-              Designing software with <em>clear intent</em> and zero bloat.
-            </div>
-            <p className="vs text-base leading-relaxed">
+            <p className="vs text-base sm:text-lg leading-relaxed text-[var(--ink2)]">
               {settings.about_text ||
                 "I'm an engineer who cares deeply about the intersection of human workflows and deterministic architecture. From building live sports auction consoles to campus operations platforms and AI assistants, I build systems that are responsive, accessible, and resilient under real-world pressure."}
             </p>
@@ -157,12 +169,12 @@ export default function About() {
           {/* Mini Stats Bento */}
           <div className="mini">
             {stats.slice(0, 3).map((st) => (
-              <div key={st.label} className="card">
-                <b>
+              <div key={st.label} className="card p-5">
+                <b className="font-heading text-3xl sm:text-4xl font-black text-[var(--ink)]">
                   {st.value}
                   {st.suffix}
                 </b>
-                <span className="text-xs font-mono tracking-widest uppercase text-muted">
+                <span className="text-xs font-mono tracking-widest uppercase text-[var(--ink2)] mt-1 block">
                   {st.label}
                 </span>
               </div>
@@ -173,16 +185,16 @@ export default function About() {
 
       {/* ─── What Drives Me: Stack of Value Screens ─── */}
       <ScrollReveal delay={0.1}>
-        <div className="vals">
+        <div className="vals mt-16">
           {/* Left Values List */}
           <div className="vleft">
-            <span className="hk">Values</span>
-            <div className="big">
-              What <em>drives</em> me
+            <div className="sh mb-6">
+              <span className="eyebrow">Values</span>
+              <h2>WHAT DRIVES ME</h2>
+              <p className="vs text-sm sm:text-base text-[var(--ink2)]" style={{ maxWidth: '40ch' }}>
+                Four things I hold myself to on every project. Pick one to see where it shows up in my work.
+              </p>
             </div>
-            <p className="vs">
-              Principles honed across live production auctions, distributed campus systems, and AI workflows.
-            </p>
 
             <div className="vlist">
               {driveCards.map((v, i) => (
@@ -294,6 +306,10 @@ export default function About() {
                   </div>
                 );
               })}
+            </div>
+            {/* Value Proof Caption Under Stack */}
+            <div className="note mt-3 font-mono text-xs text-[var(--ink2)] text-center sm:text-left">
+              VALUE {driveCards[sFront]?.n} · Proof: {driveCards[sFront]?.pf}
             </div>
           </div>
         </div>

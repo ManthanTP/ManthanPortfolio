@@ -199,8 +199,10 @@ export default function QuickPanel() {
               <IconX size={22} />
             </motion.div>
           ) : (
-            <motion.div key="open" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} style={{ position: 'relative' }}>
-              <span className="font-heading" style={{ fontSize: '1rem', fontWeight: 700 }}>MP</span>
+            <motion.div key="open" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg className="w-5 h-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M13 3L5 14h6l-1 7 8-11h-6z" />
+              </svg>
               {isPlaying && (
                 <span
                   style={{

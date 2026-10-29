@@ -135,10 +135,12 @@ export default function HeroCarousel({
   // Thumbnail strip scrolling ref
   const thumbnailStripRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!thumbnailStripRef.current) return;
-    const activeThumb = thumbnailStripRef.current.children[currentIndex] as HTMLElement | undefined;
+    const container = thumbnailStripRef.current;
+    if (!container) return;
+    const activeThumb = container.children[currentIndex] as HTMLElement | undefined;
     if (activeThumb) {
-      activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      const left = activeThumb.offsetLeft - (container.clientWidth / 2) + (activeThumb.clientWidth / 2);
+      container.scrollTo({ left, behavior: 'smooth' });
     }
   }, [currentIndex]);
 

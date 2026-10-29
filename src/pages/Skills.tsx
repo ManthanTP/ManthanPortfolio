@@ -4,10 +4,15 @@ import { useDataStore } from '../stores/useDataStore';
 import { api } from '../lib/api';
 import { DEMO_SKILLS } from '../lib/data';
 
+interface SkillItem {
+  name: string;
+  tag: string;
+}
+
 interface SkillGroup {
   badge: string;
   title: string;
-  items: Array<{ name: string; level: string }>;
+  items: SkillItem[];
 }
 
 export default function Skills() {
@@ -25,95 +30,111 @@ export default function Skills() {
 
   const allSkills = storeSkills.length > 0 ? storeSkills : DEMO_SKILLS;
 
-  // Group skills into 3 rack columns: Frontend, AI & Tools, Backend & Cloud
+  // Deduplicate and filter out unwanted duplicates
+  const cleanedSkills = useMemo(() => {
+    const seen = new Set<string>();
+    return allSkills.filter((s) => {
+      const lower = s.name.toLowerCase().trim();
+      if (lower.includes('gemini canva')) return false;
+      if (seen.has(lower)) return false;
+      seen.add(lower);
+      return true;
+    });
+  }, [allSkills]);
+
+  const defaultTag = (name: string, category?: string): string => {
+    const n = name.toLowerCase();
+    if (n.includes('react') || n.includes('next.js') || n.includes('vue')) return 'UI';
+    if (n === 'typescript' || n === 'sql' || n === 'python' || n === 'c++' || n === 'javascript') return 'language';
+    if (n.includes('tailwind') || n.includes('css')) return 'styling';
+    if (n.includes('vite') || n.includes('webpack')) return 'build';
+    if (n.includes('html')) return 'markup';
+    if (n.includes('gemini') || n.includes('claude') || n.includes('openai') || n.includes('ai')) return 'AI';
+    if (n.includes('git')) return 'workflow';
+    if (n.includes('supabase') || n.includes('firebase')) return 'platform';
+    if (n.includes('postgres') || n.includes('mongo') || n.includes('redis')) return 'database';
+    if (n.includes('node')) return 'runtime';
+    return (category || 'tool').toLowerCase();
+  };
+
+  // Group skills into 3 rack columns: Frontend, AI and tools, Backend
   const columns: SkillGroup[] = useMemo(() => {
-    const frontend = allSkills.filter(
+    const frontend = cleanedSkills.filter(
       (s) =>
         s.category?.toLowerCase().includes('front') ||
         s.category?.toLowerCase().includes('client') ||
         s.category?.toLowerCase().includes('ui') ||
-        ['react', 'typescript', 'tailwind', 'next.js', 'vue', 'html', 'css'].some((k) =>
+        ['react', 'typescript', 'tailwind', 'next.js', 'vue', 'html', 'css', 'framer'].some((k) =>
           s.name.toLowerCase().includes(k)
         )
     );
 
-    const aiTools = allSkills.filter(
+    const aiTools = cleanedSkills.filter(
       (s) =>
-        s.category?.toLowerCase().includes('ai') ||
-        s.category?.toLowerCase().includes('tool') ||
-        s.category?.toLowerCase().includes('ml') ||
-        ['claude', 'openai', 'gemini', 'python', 'git', 'vite', 'docker'].some((k) =>
-          s.name.toLowerCase().includes(k)
-        )
+        !frontend.includes(s) &&
+        (s.category?.toLowerCase().includes('ai') ||
+         s.category?.toLowerCase().includes('tool') ||
+         s.category?.toLowerCase().includes('ml') ||
+         ['claude', 'openai', 'gemini', 'python', 'git', 'vite', 'docker'].some((k) =>
+           s.name.toLowerCase().includes(k)
+         ))
     );
 
-    const backend = allSkills.filter(
+    const backend = cleanedSkills.filter(
       (s) => !frontend.includes(s) && !aiTools.includes(s)
     );
 
-    const formatLevel = (proficiency?: number) => {
-      if (!proficiency || proficiency >= 85) return 'Production';
-      if (proficiency >= 70) return 'Advanced';
-      return 'Proficient';
-    };
-
     return [
       {
-        badge: 'Interface',
-        title: 'Frontend Architecture',
+        badge: 'Frontend',
+        title: 'Frontend',
         items:
           frontend.length > 0
-            ? frontend.map((s) => ({ name: s.name, level: formatLevel(s.proficiency) }))
+            ? frontend.map((s) => ({ name: s.name, tag: (s as any).tag || defaultTag(s.name, s.category) }))
             : [
-                { name: 'React 19 & Next.js', level: 'Production' },
-                { name: 'TypeScript', level: 'Production' },
-                { name: 'Tailwind CSS v4', level: 'Production' },
-                { name: 'Framer Motion', level: 'Production' },
-                { name: 'Zustand & State Machines', level: 'Production' },
+                { name: 'React', tag: 'UI' },
+                { name: 'TypeScript', tag: 'language' },
+                { name: 'Tailwind CSS', tag: 'styling' },
+                { name: 'Vite', tag: 'build' },
+                { name: 'HTML', tag: 'markup' },
               ],
       },
       {
-        badge: 'Intelligence',
-        title: 'AI & Developer Toolchains',
+        badge: 'AI and tools',
+        title: 'AI and tools',
         items:
           aiTools.length > 0
-            ? aiTools.map((s) => ({ name: s.name, level: formatLevel(s.proficiency) }))
+            ? aiTools.map((s) => ({ name: s.name, tag: (s as any).tag || defaultTag(s.name, s.category) }))
             : [
-                { name: 'Claude & Gemini SDKs', level: 'Production' },
-                { name: 'Tool Calling & Agents', level: 'Production' },
-                { name: 'Vector Embeddings', level: 'Advanced' },
-                { name: 'Vite & Modern Bundlers', level: 'Production' },
-                { name: 'Git & CI/CD Pipelines', level: 'Production' },
+                { name: 'Gemini API', tag: 'AI' },
+                { name: 'Claude', tag: 'AI' },
+                { name: 'OpenAI', tag: 'AI' },
+                { name: 'Git', tag: 'workflow' },
               ],
       },
       {
-        badge: 'Infrastructure',
-        title: 'Backend & Cloud Systems',
+        badge: 'Backend',
+        title: 'Backend',
         items:
           backend.length > 0
-            ? backend.map((s) => ({ name: s.name, level: formatLevel(s.proficiency) }))
+            ? backend.map((s) => ({ name: s.name, tag: (s as any).tag || defaultTag(s.name, s.category) }))
             : [
-                { name: 'Node.js & Express', level: 'Production' },
-                { name: 'Supabase & PostgreSQL', level: 'Production' },
-                { name: 'REST & GraphQL APIs', level: 'Production' },
-                { name: 'WebSockets & Realtime', level: 'Production' },
-                { name: 'Serverless Edge Functions', level: 'Production' },
+                { name: 'Supabase', tag: 'platform' },
+                { name: 'PostgreSQL', tag: 'database' },
+                { name: 'SQL', tag: 'language' },
+                { name: 'Node.js', tag: 'runtime' },
+                { name: 'Firebase', tag: 'platform' },
               ],
       },
     ];
-  }, [allSkills]);
+  }, [cleanedSkills]);
 
   return (
-    <div className="section-container pt-20">
+    <div className="section-container sec">
       <ScrollReveal>
-        <div className="mb-10">
-          <span className="hk">Capabilities</span>
-          <h2 className="big text-4xl sm:text-5xl mt-2">
-            Technical <em>Stack</em>
-          </h2>
-          <p className="vs max-w-xl mt-3">
-            A battle-tested stack tuned for reliability, high-speed rendering, and deterministic data flow.
-          </p>
+        <div className="sh">
+          <span className="eyebrow">Stack</span>
+          <h2>TECHNOLOGIES I WORK WITH</h2>
         </div>
       </ScrollReveal>
 
@@ -122,15 +143,14 @@ export default function Skills() {
         <div className="card rack">
           {columns.map((col) => (
             <div key={col.title} className="col">
-              <span className="hk text-xs">{col.badge}</span>
-              <b className="font-heading text-xl uppercase tracking-wide text-[var(--ink)]">
+              <span className="k font-heading text-lg sm:text-xl uppercase font-black tracking-wide text-[var(--amber)]">
                 {col.title}
-              </b>
-              <ul>
+              </span>
+              <ul className="mt-3">
                 {col.items.map((it) => (
-                  <li key={it.name}>
-                    <span className="font-medium text-[var(--ink)]">{it.name}</span>
-                    <i className="font-mono text-xs text-[var(--ink2)]">{it.level}</i>
+                  <li key={it.name} className="flex items-center justify-between py-2.5 border-b border-[var(--hair)] last:border-b-0">
+                    <span className="text-[16px] font-sans font-medium text-[var(--ink)]">{it.name}</span>
+                    <i className="font-mono text-xs not-italic text-[var(--ink2)]">{it.tag}</i>
                   </li>
                 ))}
               </ul>

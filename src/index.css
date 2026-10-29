@@ -149,6 +149,89 @@ h1, h2, h3, h4, h5, h6, .heading-disp {
   letter-spacing: 0.01em;
 }
 
+/* ─── Standard Section System ─── */
+.sec {
+  padding-block: 96px 0;
+  scroll-margin-top: 76px;
+}
+
+.sh {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 36px;
+  text-align: left;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 12px var(--f-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--amber);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+h2 {
+  font: 900 clamp(44px, 7vw, 84px) / 0.9 var(--f-display);
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+/* ─── Buttons & Actions System ─── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 10px;
+  border: 1px solid var(--hair);
+  background: transparent;
+  color: var(--ink);
+  font: 600 14px var(--f-body);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.btn:hover {
+  background: rgba(var(--glow-rgb), 0.12);
+  border-color: var(--amber);
+}
+
+.btn.primary {
+  background: #2C3480;
+  border-color: var(--amber);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(44, 52, 128, 0.45);
+}
+
+.btn.primary:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.btn svg, .hbtn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 /* ─── Proximity & Progress Glass Card System ─── */
 .card {
   --prog: 0;
@@ -350,7 +433,7 @@ h1, h2, h3, h4, h5, h6, .heading-disp {
 }
 
 .h2in h1 {
-  font: 900 clamp(54px, 10vw, 140px)/0.86 var(--f-display);
+  font: 900 clamp(64px, 11vw, 156px)/0.84 var(--f-display);
   text-transform: uppercase;
   letter-spacing: 0.005em;
   color: var(--ink);
@@ -388,15 +471,17 @@ h1, h2, h3, h4, h5, h6, .heading-disp {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 14px 28px;
-  border-radius: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
   background: transparent;
   color: #fff;
-  font: 600 11.5px var(--f-body);
-  letter-spacing: 0.2em;
+  font: 600 13px var(--f-body);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.25s, border-color 0.25s, color 0.25s, transform 0.25s, box-shadow 0.25s;
 }
