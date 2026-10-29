@@ -92,6 +92,7 @@ export default function Projects() {
   const coverImage = activeProject.images?.[0] || '';
   const primaryCategory = activeProject.category?.[0] || 'Production Application';
   const displayTitle = (activeProject.title || '')
+    .replace(/\bINSTITUTEPLUSE\b/gi, 'InstitutePulse')
     .replace(/\bInstitute\s+Pulse\b/gi, 'InstitutePulse')
     .replace(/\bSuraksha\s+\.pro\b/gi, 'Suraksha.pro');
 
@@ -145,6 +146,7 @@ export default function Projects() {
             {filtered.map((proj, i) => {
               const isActive = i === rcur;
               const pTitle = (proj.title || '')
+                .replace(/\bINSTITUTEPLUSE\b/gi, 'InstitutePulse')
                 .replace(/\bInstitute\s+Pulse\b/gi, 'InstitutePulse')
                 .replace(/\bSuraksha\s+\.pro\b/gi, 'Suraksha.pro');
 
@@ -161,7 +163,7 @@ export default function Projects() {
                     } as React.CSSProperties
                   }
                 >
-                  <div className="n text-base sm:text-lg font-heading font-black uppercase text-[var(--ink)] truncate">{pTitle}</div>
+                  <div className="n text-base sm:text-lg font-display font-black uppercase text-[var(--ink)] truncate">{pTitle}</div>
                   <div className="c text-xs font-mono text-[var(--ink2)] truncate">{proj.category?.[0] || 'Full Stack Application'}</div>
                 </button>
               );

@@ -1,5 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-display: 'Big Shoulders Display', sans-serif;
+  --font-body: 'Instrument Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+}
+
+.font-display { font-family: var(--f-display) !important; }
+.font-body { font-family: var(--f-body) !important; }
+.font-mono { font-family: var(--f-mono) !important; }
+.font-heading { font-family: var(--f-display) !important; }
 
 /* ─── Design System Tokens (Black, Cobalt #2C3480, White) ─── */
 :root {
@@ -149,9 +161,9 @@ h1, h2, h3, h4, h5, h6, .heading-disp {
   letter-spacing: 0.01em;
 }
 
-/* ─── Standard Section System ─── */
+/* ─── Standard Section System (Normalized Zero-Void Spacing) ─── */
 .sec {
-  padding-block: 96px 0;
+  padding-block: 72px 0;
   scroll-margin-top: 76px;
 }
 
@@ -607,27 +619,31 @@ h2 {
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-top: 24px;
+  gap: 14px;
+  margin-top: 32px;
 }
 .stat {
   padding: 18px 20px;
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
-.stat b {
-  font: 900 52px/1 var(--f-display);
+.stat b, .stat b span, .stat .stat-num, .stat .stat-num span {
+  font: 900 52px/1 var(--f-display) !important;
   font-variant-numeric: tabular-nums;
-  color: var(--amber);
+  color: var(--amber) !important;
+  display: block;
 }
-.stat span {
-  font: 500 12px var(--f-mono);
+.stat > span:not(b span), .stat .stat-lbl {
+  font: 500 12px var(--f-mono) !important;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink2);
+  color: var(--ink2) !important;
+  display: block;
+  margin-top: 4px;
 }
 @media (max-width: 980px) {
   .stats { grid-template-columns: repeat(2, 1fr); }
+  .stat b, .stat b span, .stat .stat-num, .stat .stat-num span { font-size: 40px !important; }
 }
 
 /* ─── What Drives Me Stacked Cards ─── */
@@ -1086,6 +1102,15 @@ h2 {
   align-items: start;
 }
 .cl { display: grid; gap: 20px; }
+.cl .big {
+  font: 900 clamp(36px, 5.5vw, 68px)/0.92 var(--f-display) !important;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.cl .vs, .cl p {
+  font: 400 16px/1.65 var(--f-body) !important;
+  color: var(--ink2);
+}
 .mail {
   font: 500 15px var(--f-mono);
   word-break: break-all;
@@ -1135,18 +1160,19 @@ h2 {
 .fld.bad input, .fld.bad textarea { border-color: var(--danger); }
 .err { font-size: 13px; color: var(--danger); margin-top: 4px; }
 
-/* ─── Section Container & Utility ─── */
+/* ─── Section Container & Utility (Full-width responsive constraint with no abnormal gaps) ─── */
 .section-container {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 72px 20px;
+  padding-inline: 16px;
+  padding-block: 0;
 }
 @media (min-width: 640px) {
-  .section-container { padding: 96px 32px; }
+  .section-container { padding-inline: 24px; padding-block: 0; }
 }
 @media (min-width: 1024px) {
-  .section-container { padding: 112px 48px; }
+  .section-container { padding-inline: 32px; padding-block: 0; }
 }
 
 /* ─── Reduced Motion Support ─── */

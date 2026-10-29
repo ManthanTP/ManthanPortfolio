@@ -88,36 +88,37 @@ export default function Blog() {
               className="card post no-underline block group p-3.5 transition-transform duration-300 hover:-translate-y-1"
             >
               <div
-                className="cover max-h-[170px] aspect-[16/8] relative overflow-hidden rounded-[10px]"
+                className="cover aspect-[16/9] relative overflow-hidden rounded-[10px] border border-[var(--hair)]"
                 style={{ background: GRADIENTS[i % GRADIENTS.length] }}
               >
-                {post.cover_url && (
+                {post.cover_url ? (
                   <img
                     src={post.cover_url}
                     alt={post.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
+                ) : (
+                  <span className="absolute left-3.5 bottom-2.5 font-display text-2xl font-black text-white uppercase">
+                    0{i + 1}
+                  </span>
                 )}
-                <span className="absolute left-3.5 bottom-2.5 font-heading text-2xl font-black text-white uppercase">
-                  0{i + 1}
-                </span>
               </div>
 
               <div className="pb pt-3">
-                <div className="pm flex items-center justify-between text-xs font-mono text-[var(--ink2)] mb-1">
+                <div className="pm flex items-center justify-between text-xs font-mono text-[var(--ink2)] mb-1.5 tracking-wider uppercase">
                   <span>{formatDate(post.published_at)}</span>
                   <span>{post.read_time ? `${post.read_time} min read` : '5 min read'}</span>
                 </div>
 
-                <div className="text-lg font-heading font-black uppercase text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors line-clamp-2">
+                <div className="text-lg sm:text-xl font-display font-black uppercase text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors line-clamp-2 leading-tight">
                   {post.title}
                 </div>
 
-                <p className="vs text-sm line-clamp-2 mt-1.5 text-[var(--ink2)]">
+                <p className="vs font-body text-sm line-clamp-2 mt-2 text-[var(--ink2)] leading-relaxed">
                   {post.excerpt || 'Technical breakdown, architecture patterns, and key takeaways.'}
                 </p>
 
-                <div className="pt-2 text-xs font-mono text-[var(--amber)] font-medium">
+                <div className="pt-2.5 text-xs font-mono text-[var(--amber)] font-medium tracking-wide">
                   Read post →
                 </div>
               </div>

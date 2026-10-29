@@ -73,12 +73,12 @@ export default function Home() {
     (theme === 'light' ? settings.hero_portrait_light : settings.hero_portrait_dark) ||
     (theme === 'light' ? '/hero/hero-portrait-light.webp' : '/hero/hero-portrait-dark.webp');
 
-  // Stats
+  // Stats matching reference & user exact request
   const statCards = [
-    { label: 'Projects', value: projects.length || 12, suffix: '' },
-    { label: 'Technologies', value: skills.length || 16, suffix: '+' },
-    { label: 'Years Building', value: careerYears, suffix: '+' },
-    { label: 'Articles', value: posts.length || 4, suffix: '' },
+    { label: 'Projects', value: projects.length >= 12 ? projects.length : 12, suffix: '' },
+    { label: 'Technologies', value: skills.length >= 16 ? skills.length : 16, suffix: '+' },
+    { label: 'Years Building', value: careerYears && careerYears >= 3 ? careerYears : 3, suffix: '+' },
+    { label: 'Articles', value: posts.length >= 4 ? posts.length : 4, suffix: '' },
   ];
 
   // Auto-scroll to hash when navigating
@@ -139,12 +139,12 @@ export default function Home() {
                 <span className="block text-[var(--amber)]">PATEL</span>
               </h1>
 
-              <div className="hsub">
+              <div className="hsub font-body font-semibold">
                 {settings.hero_tagline ||
                   'Full-stack engineer and AI systems architect building resilient production digital platforms.'}
               </div>
 
-              <p className="hlead">
+              <p className="hlead font-body">
                 {settings.about_text ||
                   'Specializing in React, TypeScript, cloud databases, and AI agent integrations. I turn complex operational workflows into fast, elegant systems that teams trust.'}
               </p>
@@ -167,7 +167,7 @@ export default function Home() {
                 )}
 
                 <a
-                  href={settings.social_github || 'https://github.com/manthan-patel'}
+                  href={settings.social_github || 'https://github.com/ManthanTP'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn"
@@ -200,7 +200,7 @@ export default function Home() {
                 />
               ) : (
                 <div className="hp-img flex items-center justify-center">
-                  <span className="font-heading text-8xl text-indigo-400 font-black opacity-40">
+                  <span className="font-display text-8xl text-indigo-400 font-black opacity-40">
                     MP
                   </span>
                 </div>
@@ -210,13 +210,13 @@ export default function Home() {
           </div>
 
           {/* 4 Stat Cards Below Hero */}
-          <div className="stats pb-12">
+          <div className="stats my-8 pb-4">
             {statCards.map((stat) => (
               <div key={stat.label} className="card stat">
-                <b className="font-heading text-4xl sm:text-[52px] leading-none font-black text-[var(--ink)]">
+                <b className="stat-num">
                   <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                 </b>
-                <span className="text-[12px] font-mono tracking-widest uppercase text-[var(--ink2)] mt-2">{stat.label}</span>
+                <span className="stat-lbl">{stat.label}</span>
               </div>
             ))}
           </div>

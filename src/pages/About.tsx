@@ -160,7 +160,7 @@ export default function About() {
 
         <div className="about">
           <div className="bio">
-            <p className="vs text-base sm:text-lg leading-relaxed text-[var(--ink2)]">
+            <p className="vs font-body text-base sm:text-lg leading-relaxed text-[var(--ink2)]">
               {settings.about_text ||
                 "I'm an engineer who cares deeply about the intersection of human workflows and deterministic architecture. From building live sports auction consoles to campus operations platforms and AI assistants, I build systems that are responsive, accessible, and resilient under real-world pressure."}
             </p>
@@ -170,7 +170,7 @@ export default function About() {
           <div className="mini">
             {stats.slice(0, 3).map((st) => (
               <div key={st.label} className="card p-5">
-                <b className="font-heading text-3xl sm:text-4xl font-black text-[var(--ink)]">
+                <b className="font-display text-3xl sm:text-4xl font-black text-[var(--amber)]">
                   {st.value}
                   {st.suffix}
                 </b>

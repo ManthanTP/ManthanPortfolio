@@ -127,7 +127,7 @@ export default function Splash() {
   useEffect(() => {
     fitName();
     if (document.fonts) {
-      document.fonts.ready.then(fitName).catch(() => {});
+      document.fonts.ready.then(fitName).catch(() => { });
     }
     window.addEventListener('resize', fitName);
     return () => window.removeEventListener('resize', fitName);

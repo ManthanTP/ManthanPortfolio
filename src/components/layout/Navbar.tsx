@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useThemeStore } from '../../stores/useThemeStore';
@@ -25,6 +25,7 @@ export default function Navbar() {
   const settings = useSettingsStore((s) => s.settings);
   const posts = useDataStore((s) => s.posts);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentSection, setCurrentSection] = useState('home');
 
   const blogMinPosts = parseInt(settings.blog_min_posts ?? '1', 10);
   const showBlog = blogMinPosts === 0 || posts.length >= blogMinPosts;
@@ -35,13 +36,42 @@ export default function Navbar() {
     return true;
   });
 
-  const activeSection = useActiveSection(visibleLinks.map((link) => link.path.substring(1)));
+  const hookActive = useActiveSection(visibleLinks.map((link) => link.path.substring(1)));
+
+  // Fast direct IntersectionObserver matching reference line 738
+  useEffect(() => {
+    if (location.pathname !== '/') return;
+
+    const sections = visibleLinks
+      .map((l) => document.getElementById(l.path.substring(1)))
+      .filter(Boolean) as HTMLElement[];
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setCurrentSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-40% 0px -50% 0px' }
+    );
+
+    sections.forEach((sec) => observer.observe(sec));
+    return () => observer.disconnect();
+  }, [location.pathname, visibleLinks.length]);
+
+  const activeId = currentSection || hookActive || 'home';
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
     if (location.pathname === '/') {
       e.preventDefault();
+      const targetId = path.substring(1);
+      setCurrentSection(targetId);
       window.history.pushState(null, '', path);
-      const el = document.getElementById(path.substring(1));
+      const el = document.getElementById(targetId);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       }
@@ -76,24 +106,25 @@ export default function Navbar() {
               }}
             >
               <img
-                src="/hero/hero-portrait-dark.webp"
+                src={theme === 'light' ? '/hero/hero-portrait-light.webp' : '/hero/hero-portrait-dark.webp'}
                 alt="Manthan Patel"
                 className="w-full h-full object-cover object-top scale-125"
               />
             </div>
             <span
-              className="font-heading text-[26px] leading-none font-black tracking-wide text-[var(--amber)]"
+              className="font-display text-[26px] leading-none font-black tracking-wide text-[var(--amber)]"
             >
               MP
             </span>
           </a>
 
-          {/* Desktop Nav Links */}
-          <ul className="hidden md:flex items-center gap-1 list-none p-0 m-0 flex-1 justify-center overflow-x-auto min-w-0">
+          {/* Desktop Nav Links with generous padding and clear active glow */}
+          <ul className="hidden md:flex items-center gap-2 list-none p-0 m-0 flex-1 justify-center overflow-x-auto min-w-0">
             {visibleLinks.map((link) => {
+              const linkId = link.path.substring(1);
               const isActive =
                 location.pathname === '/'
-                  ? (activeSection === link.path.substring(1) || (!activeSection && link.path === '#home'))
+                  ? activeId === linkId
                   : location.pathname === link.path;
 
               return (
@@ -101,10 +132,13 @@ export default function Navbar() {
                   <a
                     href={location.pathname === '/' ? link.path : `/${link.path}`}
                     onClick={(e) => handleNavClick(e, link.path)}
-                    className="block px-3 py-1.5 rounded-lg text-[13px] font-sans font-medium whitespace-nowrap transition-colors duration-200 no-underline"
+                    className="block px-3.5 py-1.5 rounded-lg text-[13px] font-body font-medium whitespace-nowrap transition-all duration-200 no-underline"
                     style={{
-                      color: isActive ? 'var(--ink)' : 'var(--ink2)',
-                      background: isActive ? 'rgba(var(--glow-rgb), 0.14)' : 'transparent',
+                      color: isActive ? '#ffffff' : 'var(--ink2)',
+                      background: isActive ? 'rgba(44, 52, 128, 0.7)' : 'transparent',
+                      border: isActive ? '1px solid rgba(118, 134, 240, 0.45)' : '1px solid transparent',
+                      boxShadow: isActive ? '0 0 12px rgba(86, 104, 230, 0.3)' : 'none',
+                      fontWeight: isActive ? 600 : 500,
                     }}
                   >
                     {link.label}
@@ -173,7 +207,7 @@ export default function Navbar() {
               {visibleLinks.map((link) => {
                 const isActive =
                   location.pathname === '/'
-                    ? activeSection === link.path.substring(1)
+                    ? activeId === link.path.substring(1)
                     : location.pathname === link.path;
                 return (
                   <a

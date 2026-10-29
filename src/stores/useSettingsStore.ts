@@ -11,11 +11,11 @@ interface SettingsStore {
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
   settings: {
-    social_github: 'https://github.com/manthanpatel',
-    social_linkedin: 'https://linkedin.com/in/manthanpatel',
-    social_instagram: 'https://instagram.com/manthanpatel',
+    social_github: 'https://github.com/ManthanTP',
+    social_linkedin: 'https://www.linkedin.com/in/manthan-patel-763a00383',
+    social_instagram: 'https://instagram.com/manthan_tp',
     social_x: 'https://x.com/manthanpatel',
-    social_email: 'manthan@example.com',
+    social_email: 'manthantp0321@gmail.com',
     hero_tagline: 'Full-stack developer building AI-powered web apps',
     availability_status: 'open',
     availability_text: 'Available for freelance & full-time roles',
