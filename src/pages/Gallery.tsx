@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { useDataStore } from '../stores/useDataStore';
 import HeroCarousel from '../components/gallery/HeroCarousel';
 import { api } from '../lib/api';
 import { DEMO_GALLERY } from '../lib/data';
-
-const CATEGORIES = ['All', 'UI Designs', 'Project Screenshots', 'Events'];
 
 export default function Gallery() {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -33,6 +31,21 @@ export default function Gallery() {
 
   const items = storeItems.length > 0 ? storeItems : (loading ? [] : DEMO_GALLERY);
 
+  // Dynamically compute unique, trimmed, case-insensitive deduped categories
+  const categories = useMemo(() => {
+    const map = new Map<string, string>();
+    items.forEach((item) => {
+      const raw = (item.category || '').trim();
+      if (raw && raw.toLowerCase() !== 'all') {
+        const lower = raw.toLowerCase();
+        if (!map.has(lower)) {
+          map.set(lower, raw);
+        }
+      }
+    });
+    return ['All', ...Array.from(map.values())];
+  }, [items]);
+
   return (
     <div className="section-container sec">
       <ScrollReveal>
@@ -42,22 +55,27 @@ export default function Gallery() {
             <h2>MOMENTS AND SCREENS</h2>
           </div>
 
-          {/* Pill filter buttons */}
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setActiveFilter(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-mono tracking-wider uppercase transition-all duration-200 cursor-pointer ${
-                  activeFilter === cat
-                    ? 'bg-[#2C3480] text-white border border-[#7686f0]'
-                    : 'border border-[var(--hair)] text-[var(--ink2)] hover:text-white'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          {/* Category Chips styled identical to Top Nav */}
+          <div className="flex flex-wrap gap-1.5">
+            {categories.map((cat) => {
+              const isActive = activeFilter.toLowerCase() === cat.toLowerCase();
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveFilter(cat)}
+                  className="px-[14px] py-[8px] rounded-[10px] text-[13px] font-body font-medium transition-all duration-200 cursor-pointer"
+                  style={{
+                    color: isActive ? '#ffffff' : 'var(--ink2)',
+                    background: isActive ? 'rgba(44, 52, 128, 0.35)' : 'transparent',
+                    border: isActive ? '1px solid var(--amber)' : '1px solid var(--hair)',
+                    boxShadow: isActive ? '0 0 14px rgba(86, 104, 230, 0.3)' : 'none',
+                  }}
+                >
+                  {cat}
+                </button>
+              );
+            })}
           </div>
         </div>
       </ScrollReveal>
@@ -72,7 +90,7 @@ export default function Gallery() {
             items={items}
             activeCategory={activeFilter}
             onCategoryChange={setActiveFilter}
-            categories={CATEGORIES}
+            categories={categories}
           />
         </ScrollReveal>
       )}

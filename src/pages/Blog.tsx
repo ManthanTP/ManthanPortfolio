@@ -78,10 +78,10 @@ export default function Blog() {
         </div>
       </ScrollReveal>
 
-      {/* Blog Cards Grid */}
+      {/* Blog Cards Grid: 2-column layout matching design reference */}
       <ScrollReveal delay={0.08}>
-        <div className="blog grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.slice(0, 3).map((post, i) => (
+        <div className="blog grid grid-cols-1 md:grid-cols-2 gap-5">
+          {filtered.slice(0, 4).map((post, i) => (
             <Link
               key={post.id || post.slug}
               to={`/blog/${post.slug}`}
@@ -92,14 +92,20 @@ export default function Blog() {
                 style={{ background: GRADIENTS[i % GRADIENTS.length] }}
               >
                 {post.cover_url ? (
-                  <img
-                    src={post.cover_url}
-                    alt={post.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
+                  <>
+                    <img
+                      src={post.cover_url}
+                      alt={post.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[rgba(3,4,9,0.75)] via-[rgba(3,4,9,0.2)] to-transparent pointer-events-none" />
+                    <span className="absolute left-3.5 bottom-2.5 font-display text-2xl font-black text-white uppercase drop-shadow-md">
+                      0{i + 1} · {post.tags?.[0] || 'Dev Notes'}
+                    </span>
+                  </>
                 ) : (
-                  <span className="absolute left-3.5 bottom-2.5 font-display text-2xl font-black text-white uppercase">
-                    0{i + 1}
+                  <span className="absolute left-3.5 bottom-2.5 font-display text-3xl font-black text-white uppercase">
+                    0{i + 1} · {post.tags?.[0] || 'Dev Notes'}
                   </span>
                 )}
               </div>
@@ -110,15 +116,15 @@ export default function Blog() {
                   <span>{post.read_time ? `${post.read_time} min read` : '5 min read'}</span>
                 </div>
 
-                <div className="text-lg sm:text-xl font-display font-black uppercase text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors line-clamp-2 leading-tight">
+                <div className="text-xl sm:text-2xl font-display font-black uppercase text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors line-clamp-2 leading-tight">
                   {post.title}
                 </div>
 
-                <p className="vs font-body text-sm line-clamp-2 mt-2 text-[var(--ink2)] leading-relaxed">
+                <p className="vs font-body text-[15px] line-clamp-2 mt-2 text-[var(--ink2)] leading-relaxed">
                   {post.excerpt || 'Technical breakdown, architecture patterns, and key takeaways.'}
                 </p>
 
-                <div className="pt-2.5 text-xs font-mono text-[var(--amber)] font-medium tracking-wide">
+                <div className="pt-3 text-xs font-mono text-[var(--amber)] font-medium tracking-wider uppercase inline-flex items-center gap-1.5">
                   Read post →
                 </div>
               </div>

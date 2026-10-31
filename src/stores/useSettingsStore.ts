@@ -7,6 +7,7 @@ interface SettingsStore {
   loading: boolean;
   fetchSettings: () => Promise<void>;
   updateLocalSetting: (key: string, value: string) => void;
+  invalidateSettings: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
@@ -45,5 +46,15 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
   },
   updateLocalSetting: (key: string, value: string) => {
     set((state) => ({ settings: { ...state.settings, [key]: value } }));
+  },
+  invalidateSettings: async () => {
+    try {
+      const data = await api.settings.getAll();
+      const obj: Record<string, string> = {};
+      data.forEach((s) => (obj[s.key] = s.value));
+      set((state) => ({ settings: { ...state.settings, ...obj } }));
+    } catch (e) {
+      console.error('Failed to invalidate settings', e);
+    }
   },
 }));

@@ -79,6 +79,40 @@ export default function Projects() {
     return () => cancelAnimationFrame(rafId);
   }, [rHover, rcur, filtered.length]);
 
+  const selectedProjectId = useDataStore((s) => s.selectedProjectId);
+  const setSelectedProjectId = useDataStore((s) => s.setSelectedProjectId);
+
+  // Deep linking and external selection support (#project= or openProject helper)
+  useEffect(() => {
+    if (!selectedProjectId || filtered.length === 0) return;
+    const targetIdx = filtered.findIndex(
+      (p) =>
+        p.id === selectedProjectId ||
+        p.slug === selectedProjectId ||
+        p.title?.toLowerCase().includes(selectedProjectId.toLowerCase())
+    );
+    if (targetIdx !== -1) {
+      handleSelectProject(targetIdx);
+      setSelectedProjectId(null);
+    }
+  }, [selectedProjectId, filtered]);
+
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith('#project=')) {
+      const slug = hash.replace('#project=', '').toLowerCase();
+      const targetIdx = filtered.findIndex(
+        (p) =>
+          p.id?.toLowerCase() === slug ||
+          p.slug?.toLowerCase() === slug ||
+          p.title?.toLowerCase().includes(slug)
+      );
+      if (targetIdx !== -1) {
+        handleSelectProject(targetIdx);
+      }
+    }
+  }, [filtered]);
+
   const handleSelectProject = (index: number) => {
     if (index === rcur) return;
     setIsSwapping(true);
@@ -114,22 +148,27 @@ export default function Projects() {
             <h2>PROJECTS</h2>
           </div>
 
-          {/* Category Chips right-aligned on baseline */}
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setActiveFilter(cat)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-mono tracking-wider uppercase transition-all duration-200 cursor-pointer ${
-                  activeFilter === cat
-                    ? 'bg-[#2C3480] text-white border border-[#7686f0]'
-                    : 'border border-[var(--hair)] text-[var(--ink2)] hover:text-white'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          {/* Category Chips right-aligned on baseline matching nav button style */}
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORIES.map((cat) => {
+              const isActive = activeFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveFilter(cat)}
+                  className="px-[14px] py-[8px] rounded-[10px] text-[13px] font-body font-medium transition-all duration-200 cursor-pointer"
+                  style={{
+                    color: isActive ? '#ffffff' : 'var(--ink2)',
+                    background: isActive ? 'rgba(44, 52, 128, 0.35)' : 'transparent',
+                    border: isActive ? '1px solid var(--amber)' : '1px solid var(--hair)',
+                    boxShadow: isActive ? '0 0 14px rgba(86, 104, 230, 0.3)' : 'none',
+                  }}
+                >
+                  {cat}
+                </button>
+              );
+            })}
           </div>
         </div>
       </ScrollReveal>
@@ -190,7 +229,7 @@ export default function Projects() {
                 )}
                 {/* Bottom-left glass chip with cobalt tint */}
                 <div
-                  className="absolute left-3.5 bottom-3.5 px-3 py-1.5 rounded-lg border border-[rgba(255,255,255,0.2)] text-[14px] font-sans font-semibold text-white z-10"
+                  className="absolute left-3.5 bottom-3.5 px-3 py-1.5 rounded-lg border border-[rgba(255,255,255,0.2)] text-[13px] font-body font-medium text-white z-10"
                   style={{
                     background: 'rgba(44, 52, 128, 0.75)',
                     backdropFilter: 'blur(12px)',
@@ -203,9 +242,11 @@ export default function Projects() {
 
               {/* Project Body */}
               <div className="pbody">
-                <div className="ttl font-heading text-2xl sm:text-3xl font-black uppercase text-[var(--ink)]">{displayTitle}</div>
+                <div className="ttl font-display text-2xl sm:text-4xl font-black uppercase tracking-wide text-[var(--ink)]">
+                  {displayTitle}
+                </div>
 
-                <p className="vs text-base leading-relaxed text-[var(--ink2)]">
+                <p className="vs font-body text-base leading-relaxed text-[var(--ink2)]">
                   {activeProject.description ||
                     'Comprehensive full-stack architecture engineered for performance, security, and exceptional user delight.'}
                 </p>

@@ -1,7 +1,7 @@
 export interface StatItem {
   label: string;
-  value: number;
-  suffix: string;
+  value: number | string;
+  suffix?: string;
 }
 
 export interface AchievementItem {
@@ -15,14 +15,15 @@ export interface DriveCardItem {
   title: string;
   statement: string;
   proof_label: string;
-  project_slug: string;
+  project_slug?: string;
+  proof_type?: 'project' | 'experience' | 'none';
+  proof_id?: string;
 }
 
 export const DEFAULT_ABOUT_STATS: StatItem[] = [
-  { label: 'Hours Coded', value: 1200, suffix: '+' },
-  { label: 'Projects Built', value: 12, suffix: '' },
-  { label: 'Bugs Squashed', value: 300, suffix: '+' },
-  { label: 'APIs Integrated', value: 25, suffix: '+' },
+  { label: 'Hours Coded', value: '1200+', suffix: '' },
+  { label: 'Projects Built', value: '5+', suffix: '' },
+  { label: 'Hackathons Joined', value: '2+', suffix: '' },
 ];
 
 export const DEFAULT_ACHIEVEMENTS: AchievementItem[] = [

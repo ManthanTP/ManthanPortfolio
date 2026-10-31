@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 
 interface AnimatedCounterProps {
-  target: number;
+  target: number | string;
   suffix?: string;
   prefix?: string;
   duration?: number;
@@ -9,6 +9,22 @@ interface AnimatedCounterProps {
 }
 
 export default function AnimatedCounter({ target, suffix = '', prefix = '', duration = 2000, className = '' }: AnimatedCounterProps) {
+  // Parse numeric part and extra suffix from target if string (e.g. "1200+" -> numeric: 1200, extraSuffix: "+")
+  const { numericTarget, targetSuffix } = (() => {
+    if (typeof target === 'number') {
+      return { numericTarget: target, targetSuffix: '' };
+    }
+    const str = String(target || '').trim();
+    const match = str.match(/^([\d,.]+)(.*)$/);
+    if (match) {
+      const num = parseFloat(match[1].replace(/,/g, '')) || 0;
+      return { numericTarget: num, targetSuffix: match[2] || '' };
+    }
+    const parsed = parseFloat(str) || 0;
+    return { numericTarget: parsed, targetSuffix: '' };
+  })();
+
+  const effectiveSuffix = (targetSuffix || suffix || '');
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
   const started = useRef(false);
@@ -21,11 +37,11 @@ export default function AnimatedCounter({ target, suffix = '', prefix = '', dura
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
+      setCount(Math.floor(eased * numericTarget));
       if (progress < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-  }, [target, duration]);
+  }, [numericTarget, duration]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -40,7 +56,7 @@ export default function AnimatedCounter({ target, suffix = '', prefix = '', dura
 
   return (
     <span ref={ref} className={className}>
-      {prefix}{count}{suffix}
+      {prefix}{count}{effectiveSuffix}
     </span>
   );
 }

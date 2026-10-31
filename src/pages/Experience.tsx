@@ -63,7 +63,10 @@ export default function Experience() {
             {workExp.map((exp, i) => (
               <li key={exp.id || i} className="tli">
                 <i className="dot" />
-                <article className="card p-5">
+                <article
+                  className="card p-5"
+                  data-exp-id={exp.id || exp.title?.toLowerCase().replace(/\s+/g, '-')}
+                >
                   <span className="when text-xs font-mono text-[var(--amber)] uppercase tracking-wider block mb-1">
                     {formatRange(exp.start_date, exp.end_date, exp.current)}
                   </span>

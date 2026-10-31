@@ -170,7 +170,8 @@ export default function QuickPanel() {
       <motion.button
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Open quick info and music panel"
+        aria-label="Quick info"
+        title="Quick info"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         whileHover={{ scale: 1.08 }}
@@ -180,8 +181,8 @@ export default function QuickPanel() {
           bottom: 24,
           right: 24,
           zIndex: 49,
-          width: 52,
-          height: 52,
+          width: 56,
+          height: 56,
           borderRadius: '50%',
           background: 'var(--wine)',
           border: '1px solid var(--amber)',
@@ -195,26 +196,46 @@ export default function QuickPanel() {
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
-            <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+            <motion.div
+              key="close"
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="flex items-center justify-center"
+            >
               <IconX size={22} />
             </motion.div>
           ) : (
-            <motion.div key="open" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }} style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg className="w-5 h-5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M13 3L5 14h6l-1 7 8-11h-6z" />
+            <motion.div
+              key="open"
+              initial={{ rotate: 90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: -90, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {/* Outlined Info in a Circle: 22px stroke 1.8 */}
+              <svg
+                className="w-[22px] h-[22px] text-current"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
               </svg>
-              {isPlaying && (
+
+              {/* Green Availability Dot at Top-Right when Available */}
+              {(!settings.availability_status || settings.availability_status === 'open') && (
                 <span
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -4,
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    background: 'var(--accent-cyan)',
-                    boxShadow: '0 0 8px var(--accent-cyan)',
-                  }}
+                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-[var(--bg)] shadow-[0_0_8px_#34d399]"
+                  aria-label="Available"
                 />
               )}
             </motion.div>

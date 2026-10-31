@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
 import type { Project, Post, Skill, Experience, Message, GalleryItem } from '../../lib/supabase';
 import ImageCropperModal from '../../components/ui/ImageCropperModal';
+import { useSettingsStore } from '../../stores/useSettingsStore';
 
 export function ProjectsManager() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -1252,6 +1253,7 @@ export function SiteSettings() {
   });
 
   const [projectsList, setProjectsList] = useState<Project[]>([]);
+  const [experienceList, setExperienceList] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -1288,6 +1290,7 @@ export function SiteSettings() {
     }).catch(console.error);
 
     api.projects.getAll().then(setProjectsList).catch(console.error);
+    api.experience.getAll().then(setExperienceList).catch(console.error);
   }, []);
 
   // Warn on unsaved changes when navigating away
@@ -1318,6 +1321,8 @@ export function SiteSettings() {
       for (const key of Object.keys(settings)) {
         await api.settings.update(key, settings[key]);
       }
+      // Invalidate frontend settings store so updates appear immediately without reload
+      await useSettingsStore.getState().invalidateSettings();
       setIsDirty(false);
       showToast('Settings saved successfully!');
     } catch (err) {
@@ -1837,7 +1842,7 @@ export function SiteSettings() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 180px', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px 180px', gap: 12 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Statement</label>
                   <input
@@ -1853,21 +1858,81 @@ export function SiteSettings() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Linked Project</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Proof Type</label>
                   <select
-                    value={card.project_slug}
+                    value={(card as any).proof_type || 'project'}
                     onChange={(e) => {
                       const copy = [...driveCards];
-                      copy[idx].project_slug = e.target.value;
+                      (copy[idx] as any).proof_type = e.target.value;
+                      if (e.target.value === 'experience') {
+                        const firstExp = experienceList[0];
+                        if (firstExp) {
+                          (copy[idx] as any).proof_id = firstExp.id;
+                          copy[idx].proof_label = firstExp.title;
+                        }
+                      } else if (e.target.value === 'project') {
+                        const firstProj = projectsList[0];
+                        if (firstProj) {
+                          (copy[idx] as any).proof_id = firstProj.id;
+                          copy[idx].project_slug = firstProj.slug;
+                          copy[idx].proof_label = firstProj.title;
+                        }
+                      } else {
+                        (copy[idx] as any).proof_id = '';
+                        copy[idx].proof_label = 'None';
+                      }
                       updateDriveCards(copy);
                     }}
                     className="admin-input"
                   >
-                    <option value="">-- None --</option>
-                    {projectsList.map((p) => (
-                      <option key={p.id} value={p.slug}>{p.title}</option>
-                    ))}
+                    <option value="project">Project</option>
+                    <option value="experience">Experience</option>
+                    <option value="none">None</option>
                   </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', marginBottom: 4, color: 'var(--text-secondary)' }}>Choose Proof Target</label>
+                  {((card as any).proof_type || 'project') === 'experience' ? (
+                    <select
+                      value={(card as any).proof_id || ''}
+                      onChange={(e) => {
+                        const copy = [...driveCards];
+                        (copy[idx] as any).proof_id = e.target.value;
+                        const match = experienceList.find((x) => x.id === e.target.value);
+                        if (match) copy[idx].proof_label = match.title;
+                        updateDriveCards(copy);
+                      }}
+                      className="admin-input"
+                    >
+                      <option value="">-- Select Experience --</option>
+                      {experienceList.map((x) => (
+                        <option key={x.id} value={x.id}>{x.title} ({x.org})</option>
+                      ))}
+                    </select>
+                  ) : ((card as any).proof_type || 'project') === 'project' ? (
+                    <select
+                      value={(card as any).proof_id || card.project_slug || ''}
+                      onChange={(e) => {
+                        const copy = [...driveCards];
+                        (copy[idx] as any).proof_id = e.target.value;
+                        const match = projectsList.find((p) => p.id === e.target.value || p.slug === e.target.value);
+                        if (match) {
+                          copy[idx].project_slug = match.slug;
+                          copy[idx].proof_label = match.title;
+                        }
+                        updateDriveCards(copy);
+                      }}
+                      className="admin-input"
+                    >
+                      <option value="">-- Select Project --</option>
+                      {projectsList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.title}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="text-xs text-[var(--text-secondary)] pt-2 font-mono">No target required</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1878,67 +1943,166 @@ export function SiteSettings() {
       {/* 5. About Stats */}
       <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 600 }}>By The Numbers (About Stats)</h2>
-          <button
-            onClick={() => {
-              try {
-                const current = JSON.parse(settings.about_stats || '[]');
-                handleChange('about_stats', JSON.stringify([...current, { label: 'New Stat', value: 0, suffix: '' }]));
-              } catch {}
-            }}
-            style={{ background: 'transparent', border: '1px solid var(--accent-violet)', borderRadius: 6, padding: '4px 10px', color: 'var(--accent-violet)', cursor: 'pointer', fontSize: '0.75rem' }}
-          >
-            + Add Stat
-          </button>
+          <div>
+            <h2 className="font-heading" style={{ fontSize: '1.1rem', fontWeight: 600 }}>By The Numbers (About Stats)</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+              Add up to 6 custom stat metrics (e.g., "Hours Coded 1200+", "Hackathons Joined 2+").
+            </p>
+          </div>
+          {(() => {
+            let statsCount = 0;
+            try { statsCount = JSON.parse(settings.about_stats || '[]').length; } catch {}
+            return (
+              <button
+                disabled={statsCount >= 6}
+                onClick={() => {
+                  try {
+                    let current = JSON.parse(settings.about_stats || '[]');
+                    if (!Array.isArray(current)) current = [];
+                    if (current.length >= 6) return;
+                    const updated = [...current, { label: '', value: '', suffix: '' }];
+                    handleChange('about_stats', JSON.stringify(updated));
+                  } catch {
+                    handleChange('about_stats', JSON.stringify([{ label: '', value: '', suffix: '' }]));
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--accent-violet)',
+                  borderRadius: 6,
+                  padding: '6px 12px',
+                  color: 'var(--accent-violet)',
+                  cursor: statsCount >= 6 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  opacity: statsCount >= 6 ? 0.5 : 1,
+                }}
+              >
+                + Add Stat {statsCount > 0 ? `(${statsCount}/6)` : ''}
+              </button>
+            );
+          })()}
         </div>
         
         {(() => {
-          let stats: Array<{ label: string; value: number; suffix: string }> = [];
-          try { stats = JSON.parse(settings.about_stats || '[]'); } catch { return <p>Invalid stats data</p>; }
+          let stats: Array<{ label: string; value: string | number; suffix: string }> = [];
+          try {
+            const parsed = JSON.parse(settings.about_stats || '[]');
+            stats = Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return <p>Invalid stats data. Click Add Stat to reset.</p>;
+          }
+
+          const updateStatsList = (newStats: typeof stats) => {
+            handleChange('about_stats', JSON.stringify(newStats));
+          };
+
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {stats.map((stat, index) => (
-                <div key={index} style={{ display: 'flex', gap: 12 }}>
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    background: 'rgba(255,255,255,0.02)',
+                    border: '1px solid var(--border-color)',
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <button
+                      type="button"
+                      disabled={index === 0}
+                      onClick={() => {
+                        const copy = [...stats];
+                        const temp = copy[index];
+                        copy[index] = copy[index - 1];
+                        copy[index - 1] = temp;
+                        updateStatsList(copy);
+                      }}
+                      style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 3, padding: '1px 5px', color: 'var(--text-secondary)', cursor: index === 0 ? 'not-allowed' : 'pointer', fontSize: '0.7rem' }}
+                      title="Move up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index === stats.length - 1}
+                      onClick={() => {
+                        const copy = [...stats];
+                        const temp = copy[index];
+                        copy[index] = copy[index + 1];
+                        copy[index + 1] = temp;
+                        updateStatsList(copy);
+                      }}
+                      style={{ background: 'transparent', border: '1px solid var(--border-color)', borderRadius: 3, padding: '1px 5px', color: 'var(--text-secondary)', cursor: index === stats.length - 1 ? 'not-allowed' : 'pointer', fontSize: '0.7rem' }}
+                      title="Move down"
+                    >
+                      ▼
+                    </button>
+                  </div>
+
                   <input
                     type="text"
-                    value={stat.label}
-                    onChange={e => {
-                      const s = [...stats]; s[index].label = e.target.value; handleChange('about_stats', JSON.stringify(s));
+                    value={stat.label || ''}
+                    onChange={(e) => {
+                      const copy = [...stats];
+                      copy[index] = { ...copy[index], label: e.target.value };
+                      updateStatsList(copy);
                     }}
                     placeholder="Label (e.g. Hours Coded)"
                     className="admin-input"
-                    style={{ flex: 1 }}
+                    style={{ flex: 1.6 }}
                   />
-                  <input
-                    type="number"
-                    value={stat.value}
-                    onChange={e => {
-                      const s = [...stats]; s[index].value = parseInt(e.target.value, 10) || 0; handleChange('about_stats', JSON.stringify(s));
-                    }}
-                    placeholder="Value"
-                    className="admin-input"
-                    style={{ width: 100 }}
-                  />
+
                   <input
                     type="text"
-                    value={stat.suffix}
-                    onChange={e => {
-                      const s = [...stats]; s[index].suffix = e.target.value; handleChange('about_stats', JSON.stringify(s));
+                    value={stat.value !== undefined ? String(stat.value) : ''}
+                    onChange={(e) => {
+                      const copy = [...stats];
+                      copy[index] = { ...copy[index], value: e.target.value };
+                      updateStatsList(copy);
+                    }}
+                    placeholder="Value (e.g. 1200+)"
+                    className="admin-input"
+                    style={{ flex: 1 }}
+                  />
+
+                  <input
+                    type="text"
+                    value={stat.suffix || ''}
+                    onChange={(e) => {
+                      const copy = [...stats];
+                      copy[index] = { ...copy[index], suffix: e.target.value };
+                      updateStatsList(copy);
                     }}
                     placeholder="Suffix"
                     className="admin-input"
                     style={{ width: 80 }}
                   />
+
                   <button
+                    type="button"
                     onClick={() => {
-                      const s = [...stats]; s.splice(index, 1); handleChange('about_stats', JSON.stringify(s));
+                      const copy = [...stats];
+                      copy.splice(index, 1);
+                      updateStatsList(copy);
                     }}
-                    style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1.1rem', padding: '0 8px' }}
+                    style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1.2rem', padding: '0 8px' }}
+                    title="Delete stat"
                   >
                     ×
                   </button>
                 </div>
               ))}
+              {stats.length === 0 && (
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  No custom stats added yet. Click "+ Add Stat" to create one.
+                </p>
+              )}
             </div>
           );
         })()}

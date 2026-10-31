@@ -208,29 +208,47 @@ export default function Home() {
               <div className="hcap">Manthan Patel · Portfolio</div>
             </div>
           </div>
-
-          {/* 4 Stat Cards Below Hero */}
-          <div className="stats my-8 pb-4">
-            {statCards.map((stat) => (
-              <div key={stat.label} className="card stat">
-                <b className="stat-num">
-                  <AnimatedCounter target={stat.value} suffix={stat.suffix} />
-                </b>
-                <span className="stat-lbl">{stat.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* ─── Preserved Section IDs ─── */}
+      {/* ─── Hero Stat Cards OUTSIDE overflow-hidden container with full padding & glow ─── */}
+      <div className="section-container pt-10 sm:pt-12 pb-6">
+        <div className="stats grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {statCards.map((stat) => (
+            <div key={stat.label} className="card stat min-h-[110px] flex flex-col justify-center">
+              <b className="stat-num text-3xl sm:text-[46px] lg:text-[52px]">
+                <AnimatedCounter target={stat.value} suffix={stat.suffix} />
+              </b>
+              <span className="stat-lbl">{stat.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── Preserved Section IDs with Consistent Rhythm & Dividers ─── */}
+      <div className="section-divider" />
       <div id="about"><About /></div>
+      <div className="section-divider" />
       <div id="projects"><Projects /></div>
+      <div className="section-divider" />
       <div id="skills"><Skills /></div>
+      <div className="section-divider" />
       <div id="experience"><Experience /></div>
+      <div className="section-divider" />
       <div id="gallery"><Gallery /></div>
-      {showBlogSection && <div id="blog"><Blog /></div>}
-      {settings.show_resume_section !== 'false' && <div id="resume"><Resume /></div>}
+      {showBlogSection && (
+        <>
+          <div className="section-divider" />
+          <div id="blog"><Blog /></div>
+        </>
+      )}
+      {settings.show_resume_section !== 'false' && (
+        <>
+          <div className="section-divider" />
+          <div id="resume"><Resume /></div>
+        </>
+      )}
+      <div className="section-divider" />
       <div id="contact"><Contact /></div>
     </div>
   );

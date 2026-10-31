@@ -35,15 +35,36 @@ interface DataStore {
     gallery?: GalleryItem[];
     visitorCount?: number | null;
   }) => void;
+
+  selectedProjectId: string | null;
+  setSelectedProjectId: (id: string | null) => void;
+  openProject: (slugOrId: string, navigate?: (path: string) => void) => void;
 }
 
-export const useDataStore = create<DataStore>((set) => ({
+export const useDataStore = create<DataStore>((set, get) => ({
   projects: [],
   posts: [],
   skills: [],
   experience: [],
   gallery: [],
   visitorCount: null,
+  selectedProjectId: null,
+  setSelectedProjectId: (selectedProjectId) => set({ selectedProjectId }),
+
+  openProject: (slugOrId, navigate) => {
+    const list = get().projects;
+    const match = list.find((p) => p.id === slugOrId || p.slug === slugOrId);
+    const targetSlug = match ? match.slug : slugOrId;
+    if (match) {
+      set({ selectedProjectId: match.id });
+    }
+    // Deep-link or navigate directly to the project detail view
+    if (navigate) {
+      navigate(`/project/${targetSlug}`);
+    } else {
+      window.location.href = `/project/${targetSlug}`;
+    }
+  },
   status: {
     projects: 'idle',
     posts: 'idle',

@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ScrollReveal from '../components/ui/ScrollReveal';
 import { useSettingsStore } from '../stores/useSettingsStore';
 import { useDataStore } from '../stores/useDataStore';
+import AnimatedCounter from '../components/ui/AnimatedCounter';
 import { safeJsonParse } from '../lib/safeJson';
 import {
   DEFAULT_ABOUT_STATS,
@@ -13,36 +15,42 @@ const DEFAULT_VALUES = [
   {
     n: 'Problem solving',
     t: 'Take a messy real-world workflow, find the one decision that unblocks it, and turn that into a system people trust.',
-    go: 'projects',
+    proof_type: 'project',
+    proof_id: 'institutepulse',
     pf: 'InstitutePulse',
     ic: 'M3 19a2 2 0 104 0 2 2 0 10-4 0M17 5a2 2 0 104 0 2 2 0 10-4 0M7 19c6 0 4-10 10-14',
   },
   {
     n: 'Creativity',
     t: 'Interfaces that feel designed, not assembled. Balancing fluid motion with crisp predictability.',
-    go: 'projects',
+    proof_type: 'project',
+    proof_id: 'pocket-ledger',
     pf: 'Pocket Ledger',
     ic: 'M12 3l7 7-7 11-7-11 7-7zM12 3v9',
   },
   {
     n: 'Innovation',
     t: 'Use AI only where it removes real work. Connecting LLM tool-calling to verifiable operational bottlenecks.',
-    go: 'projects',
+    proof_type: 'project',
+    proof_id: 'meditrip',
     pf: 'Meditrip',
     ic: 'M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0012 3z',
   },
   {
     n: 'Leadership',
     t: 'Own the technical delivery when teammates and live production events rely on it under zero-tolerance latency.',
-    go: 'experience',
+    proof_type: 'experience',
+    proof_id: 'gcl',
     pf: 'GCL live auction',
     ic: 'M5 21V4M5 4h11l-2 4 2 4H5',
   },
 ];
 
 export default function About() {
+  const navigate = useNavigate();
   const settings = useSettingsStore((s) => s.settings);
   const projects = useDataStore((s) => s.projects);
+  const openProject = useDataStore((s) => s.openProject);
 
   // Safe parse What Drives Me cards or fallback
   const driveCards = useMemo(() => {
@@ -51,7 +59,8 @@ export default function About() {
       return raw.map((item, i) => ({
         n: item.title,
         t: item.statement,
-        go: 'projects',
+        proof_type: item.proof_type || (item.title?.toLowerCase().includes('lead') ? 'experience' : 'project'),
+        proof_id: item.proof_id || item.project_slug || '',
         pf: item.proof_label || 'View Work',
         ic: DEFAULT_VALUES[i % DEFAULT_VALUES.length].ic,
       }));
@@ -119,8 +128,28 @@ export default function About() {
     setSp2(0);
   };
 
-  const handleProofClick = (targetId: string) => {
-    const el = document.getElementById(targetId);
+  const handleProofClick = (proofType: string, proofId: string) => {
+    if (proofType === 'experience') {
+      const el = document.getElementById('experience');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      // Glow pulse animation on matching experience item
+      setTimeout(() => {
+        const item = document.querySelector(`[data-exp-id="${proofId}"]`) || document.querySelector('#experience article');
+        if (item) {
+          item.classList.add('glow-highlight');
+          setTimeout(() => item.classList.remove('glow-highlight'), 1600);
+        }
+      }, 350);
+      return;
+    }
+
+    if (proofType === 'project') {
+      openProject(proofId, navigate);
+      return;
+    }
+
+    // Fallback: scroll to element by ID
+    const el = document.getElementById(proofId);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -166,13 +195,12 @@ export default function About() {
             </p>
           </div>
 
-          {/* Mini Stats Bento */}
-          <div className="mini">
-            {stats.slice(0, 3).map((st) => (
+          {/* Mini Stats Bento (Renders up to 6 user stats with animated counters) */}
+          <div className="mini grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {stats.slice(0, 6).map((st) => (
               <div key={st.label} className="card p-5">
                 <b className="font-display text-3xl sm:text-4xl font-black text-[var(--amber)]">
-                  {st.value}
-                  {st.suffix}
+                  <AnimatedCounter target={st.value} suffix={st.suffix || ''} />
                 </b>
                 <span className="text-xs font-mono tracking-widest uppercase text-[var(--ink2)] mt-1 block">
                   {st.label}
@@ -294,7 +322,7 @@ export default function About() {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleProofClick(v.go);
+                              handleProofClick(v.proof_type || 'project', v.proof_id || 'projects');
                             }}
                             className="text-xs font-mono text-indigo-400 hover:text-indigo-300 underline tracking-wide uppercase transition-colors"
                           >

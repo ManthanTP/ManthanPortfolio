@@ -26,6 +26,19 @@ export default function HeroCarousel({
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsLightboxOpen(false);
+      if (e.key === 'ArrowRight') goToNext();
+      if (e.key === 'ArrowLeft') goToPrev();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen]);
 
   // Clamping and resetting when filter changes
   useEffect(() => {
@@ -330,6 +343,7 @@ export default function HeroCarousel({
           >
             {/* Large Active Photo / Video container */}
             <div
+              onClick={() => setIsLightboxOpen(true)}
               style={{
                 position: 'relative',
                 maxWidth: '100%',
@@ -341,6 +355,7 @@ export default function HeroCarousel({
                 borderRadius: 14,
                 overflow: 'hidden',
                 boxShadow: '0 12px 40px rgba(0, 0, 0, 0.45)',
+                cursor: 'zoom-in',
               }}
             >
               {/* Loading Shimmer / Skeleton */}
@@ -706,6 +721,131 @@ export default function HeroCarousel({
           })}
         </div>
       </div>
+
+      {/* Fullscreen Lightbox Modal */}
+      <AnimatePresence>
+        {isLightboxOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setIsLightboxOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 100,
+              background: 'rgba(3, 4, 9, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '24px',
+              cursor: 'zoom-out',
+            }}
+          >
+            {/* Top Close Button & Counter */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 24,
+                right: 24,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                zIndex: 101,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="font-mono text-sm tracking-wider uppercase text-[var(--ink2)]">
+                {String(safeIndex + 1).padStart(2, '0')} / {String(filteredItems.length).padStart(2, '0')}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsLightboxOpen(false)}
+                className="w-10 h-10 rounded-full border border-[var(--hair)] flex items-center justify-center text-white bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.15)] transition-colors cursor-pointer"
+                aria-label="Close fullscreen view"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Lightbox Media */}
+            <div
+              style={{
+                position: 'relative',
+                maxWidth: '90vw',
+                maxHeight: '80vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isVideo ? (
+                <video
+                  src={activeMediaUrl}
+                  controls
+                  autoPlay
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '80vh',
+                    borderRadius: 12,
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+                  }}
+                />
+              ) : (
+                <img
+                  src={displayUrl || activeMediaUrl}
+                  alt={activeItem?.title || 'Fullscreen photo'}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '80vh',
+                    objectFit: 'contain',
+                    borderRadius: 12,
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
+                    cursor: 'default',
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Lightbox Caption */}
+            {activeItem && (activeItem.title || activeItem.description) && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 24,
+                  textAlign: 'center',
+                  maxWidth: 600,
+                  padding: '0 16px',
+                  zIndex: 101,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {activeItem.title && (
+                  <div className="font-display text-xl sm:text-2xl font-black uppercase text-white tracking-wide">
+                    {activeItem.title}
+                  </div>
+                )}
+                {formattedCredit && (
+                  <div className="font-mono text-xs tracking-wider uppercase text-[var(--amber)] mt-1">
+                    {formattedCredit}
+                  </div>
+                )}
+                {activeItem.description && (
+                  <div className="font-body text-sm text-[var(--ink2)] mt-1">
+                    {activeItem.description}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Shimmer animation keyframe style */}
       <style>{`
