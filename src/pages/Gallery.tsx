@@ -31,7 +31,7 @@ export default function Gallery() {
 
   const items = storeItems.length > 0 ? storeItems : (loading ? [] : DEMO_GALLERY);
 
-  // Dynamically compute unique, trimmed, case-insensitive deduped categories
+  // Dynamically compute unique categories
   const categories = useMemo(() => {
     const map = new Map<string, string>();
     items.forEach((item) => {
@@ -51,11 +51,11 @@ export default function Gallery() {
       <ScrollReveal>
         <div className="sh flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <span className="eyebrow">Gallery</span>
+            <span className="eyebrow">02 / Gallery</span>
             <h2>MOMENTS AND SCREENS</h2>
           </div>
 
-          {/* Category Chips: Sleek pill buttons */}
+          {/* Category Chips: GCL style pills */}
           <div className="flex flex-wrap gap-2">
             {categories.map((cat) => {
               const isActive = activeFilter.toLowerCase() === cat.toLowerCase();
@@ -64,13 +64,11 @@ export default function Gallery() {
                   key={cat}
                   type="button"
                   onClick={() => setActiveFilter(cat)}
-                  className="px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer"
-                  style={{
-                    color: isActive ? '#ffffff' : 'var(--ink2)',
-                    background: isActive ? 'rgba(44, 52, 128, 0.7)' : 'rgba(255, 255, 255, 0.04)',
-                    border: isActive ? '1px solid rgba(118, 134, 240, 0.4)' : '1px solid var(--hair)',
-                    boxShadow: isActive ? '0 2px 10px rgba(44, 52, 128, 0.4)' : 'none',
-                  }}
+                  className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#2C3480] text-white font-semibold border border-[#7686f0]/50 shadow-[0_2px_12px_rgba(44,52,128,0.5)]'
+                      : 'bg-white/5 text-[var(--ink2)] hover:text-white hover:bg-white/10 border border-[var(--hair)]'
+                  }`}
                 >
                   {cat}
                 </button>

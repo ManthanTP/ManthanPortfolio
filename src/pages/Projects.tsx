@@ -166,10 +166,10 @@ export default function Projects() {
     (activeProject as any).metrics && Array.isArray((activeProject as any).metrics) && (activeProject as any).metrics.length > 0
       ? (activeProject as any).metrics
       : [
-          { label: 'Release Status', value: activeProject.featured ? 'Featured' : 'Shipped' },
-          { label: 'Core Technologies', value: `${activeProject.tech_stack?.length || 4}+` },
-          { label: 'Engineering Quality', value: 'Production' },
-        ];
+        { label: 'Release Status', value: activeProject.featured ? 'Featured' : 'Shipped' },
+        { label: 'Core Technologies', value: `${activeProject.tech_stack?.length || 4}+` },
+        { label: 'Engineering Quality', value: 'Production' },
+      ];
 
   return (
     <div className="section-container sec pt-10 sm:pt-16 pb-16 sm:pb-24">

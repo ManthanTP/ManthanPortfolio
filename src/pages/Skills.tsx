@@ -73,11 +73,11 @@ export default function Skills() {
       (s) =>
         !frontend.includes(s) &&
         (s.category?.toLowerCase().includes('ai') ||
-         s.category?.toLowerCase().includes('tool') ||
-         s.category?.toLowerCase().includes('ml') ||
-         ['claude', 'openai', 'gemini', 'python', 'git', 'vite', 'docker'].some((k) =>
-           s.name.toLowerCase().includes(k)
-         ))
+          s.category?.toLowerCase().includes('tool') ||
+          s.category?.toLowerCase().includes('ml') ||
+          ['claude', 'openai', 'gemini', 'python', 'git', 'vite', 'docker'].some((k) =>
+            s.name.toLowerCase().includes(k)
+          ))
     );
 
     const backend = cleanedSkills.filter(
@@ -92,12 +92,12 @@ export default function Skills() {
           frontend.length > 0
             ? frontend.map((s) => ({ name: s.name, tag: (s as any).tag || defaultTag(s.name, s.category) }))
             : [
-                { name: 'React', tag: 'UI' },
-                { name: 'TypeScript', tag: 'language' },
-                { name: 'Tailwind CSS', tag: 'styling' },
-                { name: 'Vite', tag: 'build' },
-                { name: 'HTML', tag: 'markup' },
-              ],
+              { name: 'React', tag: 'UI' },
+              { name: 'TypeScript', tag: 'language' },
+              { name: 'Tailwind CSS', tag: 'styling' },
+              { name: 'Vite', tag: 'build' },
+              { name: 'HTML', tag: 'markup' },
+            ],
       },
       {
         badge: 'AI and tools',
@@ -106,11 +106,11 @@ export default function Skills() {
           aiTools.length > 0
             ? aiTools.map((s) => ({ name: s.name, tag: (s as any).tag || defaultTag(s.name, s.category) }))
             : [
-                { name: 'Gemini API', tag: 'AI' },
-                { name: 'Claude', tag: 'AI' },
-                { name: 'OpenAI', tag: 'AI' },
-                { name: 'Git', tag: 'workflow' },
-              ],
+              { name: 'Gemini API', tag: 'AI' },
+              { name: 'Claude', tag: 'AI' },
+              { name: 'OpenAI', tag: 'AI' },
+              { name: 'Git', tag: 'workflow' },
+            ],
       },
       {
         badge: 'Backend',
@@ -119,12 +119,12 @@ export default function Skills() {
           backend.length > 0
             ? backend.map((s) => ({ name: s.name, tag: (s as any).tag || defaultTag(s.name, s.category) }))
             : [
-                { name: 'Supabase', tag: 'platform' },
-                { name: 'PostgreSQL', tag: 'database' },
-                { name: 'SQL', tag: 'language' },
-                { name: 'Node.js', tag: 'runtime' },
-                { name: 'Firebase', tag: 'platform' },
-              ],
+              { name: 'Supabase', tag: 'platform' },
+              { name: 'PostgreSQL', tag: 'database' },
+              { name: 'SQL', tag: 'language' },
+              { name: 'Node.js', tag: 'runtime' },
+              { name: 'Firebase', tag: 'platform' },
+            ],
       },
     ];
   }, [cleanedSkills]);
