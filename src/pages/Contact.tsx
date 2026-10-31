@@ -226,13 +226,19 @@ export default function Contact() {
 
       {/* ─── Unified Base Location & Schematic Hubballi Map ─── */}
       {showMap && (
-        <div className="pt-20 sm:pt-28">
+        <div style={{ marginTop: '80px' }}>
           <div className="section-divider mb-16 sm:mb-20" />
           <ScrollReveal delay={0.08}>
-            <div className="card p-8 sm:p-12 lg:p-14 rounded-3xl border border-[var(--hair)] bg-[var(--bg2)] shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+            <div
+              className="card rounded-3xl border border-[var(--hair)] bg-[var(--bg2)] shadow-[0_20px_60px_rgba(0,0,0,0.45)]"
+              style={{ padding: 'clamp(32px, 5vw, 56px)' }}
+            >
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 {/* Left Column: Base Information with generous internal padding */}
-                <div className="lg:col-span-5 flex flex-col justify-between gap-6 pl-2 sm:pl-4 lg:pl-6 pr-2 sm:pr-4">
+                <div
+                  className="lg:col-span-5 flex flex-col justify-between gap-6"
+                  style={{ paddingLeft: 'clamp(8px, 2.5vw, 24px)', paddingRight: 'clamp(8px, 2.5vw, 20px)' }}
+                >
                   <div>
                     <span className="eyebrow">Base Location</span>
                     <div className="big font-display font-black uppercase text-3xl sm:text-5xl text-[var(--ink)] mt-2">
@@ -246,12 +252,32 @@ export default function Contact() {
                   <div className="pt-2">
                     {/* Generously padded Zone & Coords boxes */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 text-xs font-mono uppercase text-[var(--ink2)] mb-6">
-                      <div className="p-4 sm:p-5 rounded-2xl border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.06)] flex flex-col justify-center">
-                        <span className="opacity-60 block text-[11px] tracking-wider mb-1.5">Zone</span>
+                      <div
+                        style={{
+                          padding: '18px 22px',
+                          borderRadius: '16px',
+                          background: 'rgba(var(--glow-rgb), 0.06)',
+                          border: '1px solid var(--hair)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <span className="opacity-60 block text-[11px] tracking-wider mb-2">Zone</span>
                         <b className="text-[var(--ink)] text-sm sm:text-base font-bold whitespace-nowrap">IST · UTC+5:30</b>
                       </div>
-                      <div className="p-4 sm:p-5 rounded-2xl border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.06)] flex flex-col justify-center">
-                        <span className="opacity-60 block text-[11px] tracking-wider mb-1.5">Coords</span>
+                      <div
+                        style={{
+                          padding: '18px 22px',
+                          borderRadius: '16px',
+                          background: 'rgba(var(--glow-rgb), 0.06)',
+                          border: '1px solid var(--hair)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <span className="opacity-60 block text-[11px] tracking-wider mb-2">Coords</span>
                         <b className="text-[var(--ink)] text-sm sm:text-base font-bold whitespace-nowrap">15.36° N, 75.12° E</b>
                       </div>
                     </div>

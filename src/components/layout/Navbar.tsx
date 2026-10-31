@@ -61,7 +61,7 @@ export default function Navbar() {
 
   const hookActive = useActiveSection(visibleLinks.map((link) => link.path.substring(1)));
 
-  // Scroll position tracking with generous sticky header offset
+  // Scroll position tracking with sticky header offset
   useEffect(() => {
     if (location.pathname !== '/') return;
 
@@ -108,7 +108,14 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--hair)] bg-[rgba(3,4,9,0.85)] backdrop-blur-xl">
+    <header
+      className="sticky top-0 z-50 w-full border-b border-[var(--hair)] transition-colors duration-300"
+      style={{
+        background: 'var(--nav)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
       <div className="w-full max-w-[min(1440px,94vw)] mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
         {/* Left: Brand & Status (matching GCL header) */}
         <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
@@ -149,7 +156,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Center: Nav links with correct GCL gapping & button styling */}
+        {/* Center: Nav links with correct GCL gapping & theme-aware button styling */}
         <nav className="hidden min-[900px]:flex items-center gap-1.5 sm:gap-2">
           {visibleLinks.map((link) => {
             const linkId = link.path.substring(1);
@@ -163,10 +170,11 @@ export default function Navbar() {
                 key={link.path}
                 href={location.pathname === '/' ? link.path : `/${link.path}`}
                 onClick={(e) => handleNavClick(e, link.path)}
-                className={`relative px-3.5 py-1.5 rounded-lg text-[13px] font-body font-medium transition-all duration-200 no-underline whitespace-nowrap ${isActive
-                    ? 'text-white bg-[rgba(44,52,128,0.55)] border border-[#7686f0]/40 shadow-[0_2px_12px_rgba(44,52,128,0.3)]'
-                    : 'text-[var(--ink2)] hover:text-white hover:bg-white/5 border border-transparent'
-                  }`}
+                className={`relative px-3.5 py-1.5 rounded-lg text-[13px] font-body font-medium transition-all duration-200 no-underline whitespace-nowrap ${
+                  isActive
+                    ? 'text-white bg-[#2C3480] shadow-[0_2px_12px_rgba(44,52,128,0.4)]'
+                    : 'text-[var(--ink2)] hover:text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.08)]'
+                }`}
               >
                 {link.label}
               </a>
@@ -178,7 +186,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
           {istTime && (
             <div className="hidden md:flex items-center gap-1.5 font-mono text-xs text-[var(--ink2)] tracking-wider">
-              <span className="text-white font-semibold">{istTime}</span>
+              <span className="text-[var(--ink)] font-semibold">{istTime}</span>
               <span className="opacity-60 text-[10px]">IST</span>
             </div>
           )}
@@ -187,7 +195,7 @@ export default function Navbar() {
             type="button"
             onClick={toggleTheme}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="w-9 h-9 rounded-lg border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-lg border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.1)] transition-colors cursor-pointer"
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -223,7 +231,7 @@ export default function Navbar() {
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation menu"
-            className="min-[900px]:hidden w-9 h-9 rounded-lg border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-white/10 transition-colors cursor-pointer"
+            className="min-[900px]:hidden w-9 h-9 rounded-lg border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.1)] transition-colors cursor-pointer"
           >
             {mobileMenuOpen ? <IconX size={18} /> : <IconMenu size={18} />}
           </button>
@@ -237,7 +245,12 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="min-[900px]:hidden border-t border-[var(--hair)] bg-[rgba(3,4,9,0.95)] backdrop-blur-2xl"
+            className="min-[900px]:hidden border-t border-[var(--hair)]"
+            style={{
+              background: 'var(--bg2)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+            }}
           >
             <div className="p-4 flex flex-col gap-1.5 max-w-[min(1440px,94vw)] mx-auto">
               {visibleLinks.map((link) => {
@@ -250,10 +263,11 @@ export default function Navbar() {
                     key={link.path}
                     href={location.pathname === '/' ? link.path : `/${link.path}`}
                     onClick={(e) => handleNavClick(e, link.path)}
-                    className={`no-underline flex items-center min-h-[44px] px-4 rounded-lg text-[14px] font-body font-medium transition-all ${isActive
-                        ? 'text-white bg-[rgba(44,52,128,0.65)]'
-                        : 'text-[var(--ink2)] hover:text-white hover:bg-white/5'
-                      }`}
+                    className={`no-underline flex items-center min-h-[44px] px-4 rounded-lg text-[14px] font-body font-medium transition-all ${
+                      isActive
+                        ? 'text-white bg-[#2C3480]'
+                        : 'text-[var(--ink2)] hover:text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.08)]'
+                    }`}
                   >
                     {link.label}
                   </a>
