@@ -69,6 +69,7 @@ export default function About() {
   // Stacked cards state
   const [sFront, setSFront] = useState(0);
   const [sHover, setSHover] = useState(false);
+  const [sp2, setSp2] = useState(0);
   const stackRef = useRef<HTMLDivElement>(null);
 
   // 3D Tilt on Stack
@@ -103,17 +104,35 @@ export default function About() {
   // Auto-cycle stacked window cards (~5.5s)
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || sHover || driveCards.length <= 1) return;
+    if (reduce) return;
 
-    const interval = setInterval(() => {
-      setSFront((curr) => (curr + 1) % driveCards.length);
-    }, 5500);
+    let rafId: number;
+    let last = performance.now();
 
-    return () => clearInterval(interval);
+    const loop = (now: number) => {
+      const dt = Math.min(now - last, 64);
+      last = now;
+
+      if (!sHover && driveCards.length > 1) {
+        setSp2((prev) => {
+          const next = prev + (dt / 5500) * 100;
+          if (next >= 100) {
+            setSFront((curr) => (curr + 1) % driveCards.length);
+            return 0;
+          }
+          return next;
+        });
+      }
+      rafId = requestAnimationFrame(loop);
+    };
+
+    rafId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafId);
   }, [sHover, driveCards.length]);
 
   const selectCard = (index: number) => {
     setSFront(index);
+    setSp2(0);
   };
 
   const handleProofClick = (proofType: string, proofId: string) => {
@@ -208,108 +227,112 @@ export default function About() {
         </div>
       </ScrollReveal>
 
-      {/* ─── What Drives Me: Stack of Value Screens Centered in the middle ─── */}
+      {/* ─── What Drives Me: Original 2-Column with Centered 3D Card Stack ─── */}
       <ScrollReveal delay={0.1}>
-        <div className="mt-16 sm:mt-24 mb-16 sm:mb-20 flex flex-col items-center text-center">
-          {/* Centered Heading */}
-          <div className="sh text-center flex flex-col items-center mb-8">
-            <span className="eyebrow">Values</span>
-            <h2 className="text-center">WHAT DRIVES ME</h2>
-            <p className="vs text-center max-w-xl text-sm sm:text-base text-[var(--ink2)] mt-2">
-              Four things I hold myself to on every project. Select any value to explore where it shows up.
-            </p>
+        <div className="vals mt-16 sm:mt-24 mb-16 sm:mb-20">
+          {/* Left Values List (Preserved original 2-column) */}
+          <div className="vleft">
+            <div className="sh mb-6">
+              <span className="eyebrow">Values</span>
+              <h2>WHAT DRIVES ME</h2>
+              <p className="vs text-sm sm:text-base text-[var(--ink2)]" style={{ maxWidth: '40ch' }}>
+                Four things I hold myself to on every project. Pick one to see where it shows up in my work.
+              </p>
+            </div>
+
+            <div className="vlist">
+              {driveCards.map((v, i) => (
+                <button
+                  key={v.n}
+                  type="button"
+                  onClick={() => selectCard(i)}
+                  className={`vl ${i === sFront ? 'on' : ''}`}
+                >
+                  <span>{v.n}</span>
+                  <svg
+                    className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Centered Value Tabs */}
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-10 w-full max-w-3xl">
-            {driveCards.map((v, i) => (
-              <button
-                key={v.n}
-                type="button"
-                onClick={() => selectCard(i)}
-                className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-2 ${
-                  i === sFront
-                    ? 'bg-[#2C3480] text-white font-bold border border-[#7686f0]/60 shadow-[0_4px_16px_rgba(44,52,128,0.5)] scale-105'
-                    : 'bg-white/5 text-[var(--ink2)] hover:text-white hover:bg-white/10 border border-[var(--hair)]'
-                }`}
-              >
-                <span>{v.n}</span>
-                <span className="opacity-60 text-[10px]">0{i + 1}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Centered Card Stage */}
-          <div className="w-full max-w-2xl mx-auto flex flex-col items-center">
+          {/* Right Stacked Window Cards with 3D Tilt - Centered inside column */}
+          <div className="stackwrap">
             <div
               ref={stackRef}
               id="stack"
-              className="relative w-full h-[320px] sm:h-[340px]"
+              className="stack"
               onPointerEnter={() => setSHover(true)}
               onPointerLeave={() => setSHover(false)}
               style={
                 {
                   '--rx': `${tilt.rx}deg`,
                   '--ry': `${tilt.ry}deg`,
-                  perspective: '1000px',
                 } as React.CSSProperties
               }
             >
               {driveCards.map((v, i) => {
                 const pos = (i - sFront + driveCards.length) % driveCards.length;
-
-                const translateY = pos === 0 ? 0 : pos === 1 ? 14 : pos === 2 ? 28 : 50;
-                const scale = pos === 0 ? 1 : pos === 1 ? 0.96 : pos === 2 ? 0.92 : 0.85;
-                const opacity = pos === 0 ? 1 : pos === 1 ? 0.65 : pos === 2 ? 0.35 : 0;
-                const zIndex = pos === 0 ? 10 : pos === 1 ? 5 : pos === 2 ? 2 : 0;
+                const posStr = pos > 2 ? 'h' : String(pos);
+                const isFront = pos === 0;
 
                 return (
                   <div
                     key={v.n}
-                    className="card absolute inset-x-0 mx-auto w-full max-w-xl rounded-2xl border border-[var(--hair)] p-6 sm:p-8 cursor-pointer transition-all duration-500 ease-out shadow-2xl"
+                    className="card scr"
+                    data-pos={posStr}
+                    data-prog-controlled="true"
+                    role="button"
+                    tabIndex={pos > 2 ? -1 : 0}
+                    aria-label={`Show ${v.n}`}
                     onClick={() => selectCard(i)}
-                    style={{
-                      transform: `translate3d(0, ${translateY}px, 0) scale(${scale})`,
-                      opacity,
-                      zIndex,
-                      background: 'var(--bg2)',
-                    }}
+                    style={
+                      {
+                        '--c1': '#7686f0',
+                        '--prog': isFront ? sp2.toFixed(1) : posStr === 'h' ? '0' : '100',
+                      } as React.CSSProperties
+                    }
                   >
-                    <div className="flex items-center justify-between border-b border-[var(--hair)] pb-3 mb-5 text-xs font-mono uppercase tracking-widest text-[var(--ink2)]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
-                      </div>
-                      <span>WHAT DRIVES ME · 0{i + 1}</span>
-                    </div>
-
-                    <div className="flex items-start gap-4 text-left">
-                      <div className="w-12 h-12 rounded-xl bg-[#2C3480]/20 border border-[#7686f0]/40 flex items-center justify-center text-[#7686f0] flex-shrink-0">
-                        <svg
-                          className="w-6 h-6"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d={v.ic} />
-                        </svg>
+                    <div className="in">
+                      <div className="tb">
+                        <i />
+                        <i />
+                        <i />
+                        <span>what drives me · 0{i + 1}</span>
                       </div>
 
-                      <div className="flex-1">
-                        <h4 className="font-display font-black text-2xl sm:text-3xl uppercase tracking-wide text-white leading-tight">
-                          {v.n}
-                        </h4>
-                        <p className="font-body text-sm sm:text-base text-[var(--ink2)] mt-2 leading-relaxed">
-                          {v.t}
-                        </p>
+                      <div className="vc">
+                        <div className="vi">
+                          <svg
+                            className="w-5 h-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d={v.ic} />
+                          </svg>
+                        </div>
 
-                        <div className="mt-5 pt-4 border-t border-[var(--hair)] flex items-center justify-between">
-                          <span className="text-xs font-mono uppercase tracking-wider text-gray-400">
-                            Verified Proof
+                        <div className="vt">{v.n}</div>
+                        <p className="vs">{v.t}</p>
+
+                        <div className="vp">
+                          <span className="text-xs font-mono tracking-wider uppercase text-muted">
+                            Proof
                           </span>
                           <button
                             type="button"
@@ -317,10 +340,9 @@ export default function About() {
                               e.stopPropagation();
                               handleProofClick(v.proof_type || 'project', v.proof_id || 'projects');
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#2C3480]/40 hover:bg-[#2C3480] text-white text-xs font-mono uppercase tracking-wider border border-[#7686f0]/40 transition-colors cursor-pointer"
+                            className="text-xs font-mono text-indigo-400 hover:text-indigo-300 underline tracking-wide uppercase transition-colors cursor-pointer"
                           >
-                            <span>{v.pf}</span>
-                            <span>→</span>
+                            {v.pf} →
                           </button>
                         </div>
                       </div>
@@ -329,12 +351,9 @@ export default function About() {
                 );
               })}
             </div>
-
-            {/* Note & navigation under card */}
-            <div className="mt-6 flex items-center justify-center gap-4 text-xs font-mono text-[var(--ink2)]">
-              <span>VALUE {driveCards[sFront]?.n}</span>
-              <span>·</span>
-              <span className="text-[#7686f0]">CLICK ANY CARD OR TAB TO SWITCH</span>
+            {/* Value Proof Caption Under Stack */}
+            <div className="note mt-3 font-mono text-xs text-[var(--ink2)] text-center">
+              VALUE {driveCards[sFront]?.n} · Proof: {driveCards[sFront]?.pf}
             </div>
           </div>
         </div>

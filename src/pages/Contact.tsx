@@ -226,108 +226,112 @@ export default function Contact() {
 
       {/* ─── Unified Base Location & Schematic Hubballi Map ─── */}
       {showMap && (
-        <ScrollReveal delay={0.08}>
-          <div className="card mt-20 sm:mt-28 p-6 sm:p-10 rounded-3xl border border-[var(--hair)] bg-[var(--bg2)] shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              {/* Left Column: Base Information */}
-              <div className="lg:col-span-5 flex flex-col justify-between gap-6">
-                <div>
-                  <span className="eyebrow">Base Location</span>
-                  <div className="big font-display font-black uppercase text-3xl sm:text-5xl text-[var(--ink)] mt-2">
-                    Hubballi, India
+        <div className="pt-20 sm:pt-28">
+          <div className="section-divider mb-16 sm:mb-20" />
+          <ScrollReveal delay={0.08}>
+            <div className="card p-8 sm:p-12 lg:p-14 rounded-3xl border border-[var(--hair)] bg-[var(--bg2)] shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+                {/* Left Column: Base Information with generous internal padding */}
+                <div className="lg:col-span-5 flex flex-col justify-between gap-6 pl-2 sm:pl-4 lg:pl-6 pr-2 sm:pr-4">
+                  <div>
+                    <span className="eyebrow">Base Location</span>
+                    <div className="big font-display font-black uppercase text-3xl sm:text-5xl text-[var(--ink)] mt-2">
+                      Hubballi, India
+                    </div>
+                    <p className="vs mt-3 text-[var(--ink2)] leading-relaxed text-sm sm:text-base">
+                      Operating out of Karnataka, India. Available worldwide for remote technical engineering, system architecture, and production frontend work.
+                    </p>
                   </div>
-                  <p className="vs mt-3 text-[var(--ink2)] leading-relaxed text-sm sm:text-base">
-                    Operating out of Karnataka, India. Available worldwide for remote technical engineering, system architecture, and production frontend work.
-                  </p>
+
+                  <div className="pt-2">
+                    {/* Generously padded Zone & Coords boxes */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 text-xs font-mono uppercase text-[var(--ink2)] mb-6">
+                      <div className="p-4 sm:p-5 rounded-2xl border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.06)] flex flex-col justify-center">
+                        <span className="opacity-60 block text-[11px] tracking-wider mb-1.5">Zone</span>
+                        <b className="text-[var(--ink)] text-sm sm:text-base font-bold whitespace-nowrap">IST · UTC+5:30</b>
+                      </div>
+                      <div className="p-4 sm:p-5 rounded-2xl border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.06)] flex flex-col justify-center">
+                        <span className="opacity-60 block text-[11px] tracking-wider mb-1.5">Coords</span>
+                        <b className="text-[var(--ink)] text-sm sm:text-base font-bold whitespace-nowrap">15.36° N, 75.12° E</b>
+                      </div>
+                    </div>
+
+                    <a
+                      href="https://maps.google.com/?q=Hubballi,Karnataka"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn primary inline-flex items-center justify-center gap-2 h-12 px-7 rounded-xl font-mono text-xs uppercase tracking-wider cursor-pointer transition-all hover:scale-[1.02]"
+                    >
+                      Open in Maps
+                      <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    </a>
+                  </div>
                 </div>
 
-                <div className="pt-2">
-                  <div className="grid grid-cols-2 gap-3 text-xs font-mono uppercase text-[var(--ink2)] mb-5">
-                    <div className="p-3.5 rounded-xl border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.04)]">
-                      <span className="opacity-60 block text-[10px] tracking-wider mb-0.5">Zone</span>
-                      <b className="text-[var(--ink)] text-sm">IST · UTC+5:30</b>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.04)]">
-                      <span className="opacity-60 block text-[10px] tracking-wider mb-0.5">Coords</span>
-                      <b className="text-[var(--ink)] text-sm">15.36° N, 75.12° E</b>
-                    </div>
-                  </div>
-
-                  <a
-                    href="https://maps.google.com/?q=Hubballi,Karnataka"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn primary inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl font-mono text-xs uppercase tracking-wider cursor-pointer transition-all hover:scale-[1.02]"
+                {/* Right Column: Schematic Map inside the same unified card */}
+                <div className="lg:col-span-7 rounded-2xl overflow-hidden border border-[var(--hair)] bg-black/40 p-2 sm:p-4">
+                  <svg
+                    viewBox="0 0 640 380"
+                    role="img"
+                    aria-label="Schematic map of Hubballi, Karnataka, with Dharwad to the northwest"
+                    className="w-full h-auto block rounded-xl"
                   >
-                    Open in Maps
-                    <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                  </a>
+                    <rect className="mbg" width="640" height="380" />
+                    <path
+                      className="mland"
+                      d="M30 60 C120 20 240 40 300 90 C360 140 330 220 260 250 C190 280 90 270 50 210 C20 160 10 100 30 60z"
+                    />
+                    <path
+                      className="mland"
+                      d="M390 150 C470 110 580 130 610 200 C630 260 560 330 470 330 C400 330 360 260 390 150z"
+                    />
+                    <path
+                      className="mwater"
+                      d="M470 226 q30 -24 66 -6 q20 20 -8 38 q-42 14 -58 -32z"
+                    />
+                    <path
+                      className="road hw"
+                      d="M-10 262 C120 240 220 200 330 188 S540 120 650 84"
+                    />
+                    <path className="road" d="M330 188 C340 250 330 310 350 390" />
+                    <path
+                      className="road sm"
+                      d="M0 140 C90 160 170 130 250 160 S400 240 480 390"
+                    />
+                    <path
+                      className="road sm"
+                      d="M200 -10 C210 60 190 110 200 170 S250 300 230 390"
+                    />
+                    <path className="road sm" d="M420 -10 C430 60 400 110 380 150" />
+                    <circle cx="196" cy="122" r="6" fill="var(--ink2)" />
+                    <text className="mt1" x="208" y="120">
+                      DHARWAD
+                    </text>
+                    <text className="mt1" x="468" y="96" transform="rotate(-9 468 96)">
+                      NH 48
+                    </text>
+                    <circle className="pr" cx="352" cy="190" r="14" />
+                    <circle className="pr p2" cx="352" cy="190" r="14" />
+                    <circle className="pin" cx="352" cy="190" r="9" />
+                    <text className="mt2" x="372" y="222">
+                      Hubballi
+                    </text>
+                    <text className="mt1" x="372" y="240">
+                      15.36° N · 75.12° E
+                    </text>
+                    <path d="M600 40 l8 22 l-8 -6 l-8 6z" fill="var(--ink2)" />
+                    <text className="mt1" x="594" y="82">
+                      N
+                    </text>
+                  </svg>
                 </div>
-              </div>
-
-              {/* Right Column: Schematic Map inside the same unified card */}
-              <div className="lg:col-span-7 rounded-2xl overflow-hidden border border-[var(--hair)] bg-black/40 p-2 sm:p-3">
-                <svg
-                  viewBox="0 0 640 380"
-                  role="img"
-                  aria-label="Schematic map of Hubballi, Karnataka, with Dharwad to the northwest"
-                  className="w-full h-auto block rounded-xl"
-                >
-                  <rect className="mbg" width="640" height="380" />
-                  <path
-                    className="mland"
-                    d="M30 60 C120 20 240 40 300 90 C360 140 330 220 260 250 C190 280 90 270 50 210 C20 160 10 100 30 60z"
-                  />
-                  <path
-                    className="mland"
-                    d="M390 150 C470 110 580 130 610 200 C630 260 560 330 470 330 C400 330 360 260 390 150z"
-                  />
-                  <path
-                    className="mwater"
-                    d="M470 226 q30 -24 66 -6 q20 20 -8 38 q-42 14 -58 -32z"
-                  />
-                  <path
-                    className="road hw"
-                    d="M-10 262 C120 240 220 200 330 188 S540 120 650 84"
-                  />
-                  <path className="road" d="M330 188 C340 250 330 310 350 390" />
-                  <path
-                    className="road sm"
-                    d="M0 140 C90 160 170 130 250 160 S400 240 480 390"
-                  />
-                  <path
-                    className="road sm"
-                    d="M200 -10 C210 60 190 110 200 170 S250 300 230 390"
-                  />
-                  <path className="road sm" d="M420 -10 C430 60 400 110 380 150" />
-                  <circle cx="196" cy="122" r="6" fill="var(--ink2)" />
-                  <text className="mt1" x="208" y="120">
-                    DHARWAD
-                  </text>
-                  <text className="mt1" x="468" y="96" transform="rotate(-9 468 96)">
-                    NH 48
-                  </text>
-                  <circle className="pr" cx="352" cy="190" r="14" />
-                  <circle className="pr p2" cx="352" cy="190" r="14" />
-                  <circle className="pin" cx="352" cy="190" r="9" />
-                  <text className="mt2" x="372" y="222">
-                    Hubballi
-                  </text>
-                  <text className="mt1" x="372" y="240">
-                    15.36° N · 75.12° E
-                  </text>
-                  <path d="M600 40 l8 22 l-8 -6 l-8 6z" fill="var(--ink2)" />
-                  <text className="mt1" x="594" y="82">
-                    N
-                  </text>
-                </svg>
               </div>
             </div>
-          </div>
-        </ScrollReveal>
+          </ScrollReveal>
+        </div>
       )}
     </div>
   );
