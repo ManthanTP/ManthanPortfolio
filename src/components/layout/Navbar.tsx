@@ -43,12 +43,12 @@ export default function Navbar() {
     if (location.pathname !== '/') return;
 
     const handleScroll = () => {
-      if (window.scrollY < 160) {
+      if (window.scrollY < 120) {
         setCurrentSection('home');
         return;
       }
 
-      const scrollPos = window.scrollY + 180;
+      const scrollPos = window.scrollY + 200;
       for (let i = visibleLinks.length - 1; i >= 0; i--) {
         const id = visibleLinks[i].path.substring(1);
         const el = document.getElementById(id);
@@ -85,28 +85,27 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 px-4 py-3 pointer-events-auto">
-      <div className="max-w-[1120px] mx-auto">
+    <header className="sticky top-3.5 z-50 px-3 sm:px-6 pointer-events-auto">
+      <div className="max-w-fit sm:max-w-5xl mx-auto flex justify-center">
         <nav
-          className="flex items-center justify-between gap-4 px-4 py-2.5 rounded-[16px] border border-[var(--hair)] transition-all duration-300"
+          className="flex items-center gap-2 sm:gap-6 px-3.5 sm:px-5 py-2 rounded-full border border-[var(--hair)] transition-all duration-300 shadow-[0_12px_36px_rgba(0,0,0,0.45)]"
           style={{
             background: 'var(--nav)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
           }}
           aria-label="Main"
         >
-          {/* Logo: Circular crop of face + cobalt ring + MP */}
+          {/* Logo: Circular crop of portrait + MP text */}
           <a
             href="#home"
             onClick={(e) => handleNavClick(e, '#home')}
-            className="flex items-center gap-2.5 group no-underline flex-shrink-0"
+            className="flex items-center gap-2.5 group no-underline flex-shrink-0 pr-1 sm:pr-2"
             aria-label="Manthan Patel, home"
           >
             <div
-              className="w-[38px] h-[38px] rounded-full overflow-hidden border-2 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+              className="w-[34px] h-[34px] rounded-full overflow-hidden border border-[var(--hair)] flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
               style={{
-                borderColor: 'var(--amber)',
                 background: 'radial-gradient(circle at 50% 30%, #2C3480, #05060d 75%)',
               }}
             >
@@ -116,15 +115,13 @@ export default function Navbar() {
                 className="w-full h-full object-cover object-top scale-125"
               />
             </div>
-            <span
-              className="font-display text-[26px] leading-none font-black tracking-wide text-[var(--amber)]"
-            >
+            <span className="font-display text-[22px] leading-none font-black tracking-wide text-[var(--ink)] group-hover:text-[var(--amber)] transition-colors">
               MP
             </span>
           </a>
 
-          {/* Desktop Nav Links Centered with Instrument Sans 13px/500 */}
-          <ul className="hidden min-[860px]:flex items-center justify-center gap-1 list-none p-0 m-0 flex-1 overflow-x-auto min-w-0">
+          {/* Desktop Nav Links Centered */}
+          <ul className="hidden min-[860px]:flex items-center justify-center gap-1 list-none p-0 m-0">
             {visibleLinks.map((link) => {
               const linkId = link.path.substring(1);
               const isActive =
@@ -133,47 +130,44 @@ export default function Navbar() {
                   : location.pathname === link.path;
 
               return (
-                <li key={link.path}>
+                <li key={link.path} className="relative">
                   <a
                     href={location.pathname === '/' ? link.path : `/${link.path}`}
                     onClick={(e) => handleNavClick(e, link.path)}
-                    className="block px-[14px] py-[8px] rounded-[10px] text-[13px] font-body font-medium whitespace-nowrap transition-all duration-200 no-underline"
+                    className="relative z-10 block px-3 py-1.5 rounded-full text-[13px] font-body font-medium whitespace-nowrap transition-colors duration-200 no-underline"
                     style={{
                       color: isActive ? '#ffffff' : 'var(--ink2)',
-                      background: isActive ? 'rgba(44, 52, 128, 0.35)' : 'transparent',
-                      border: isActive ? '1px solid var(--amber)' : '1px solid transparent',
-                      boxShadow: isActive ? '0 0 14px rgba(86, 104, 230, 0.3)' : 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = 'var(--ink)';
-                        e.currentTarget.style.background = 'rgba(44, 52, 128, 0.18)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.color = 'var(--ink2)';
-                        e.currentTarget.style.background = 'transparent';
-                      }
                     }}
                   >
                     {link.label}
                   </a>
+
+                  {/* Clean active pill background without harsh borders */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavPill"
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: 'rgba(44, 52, 128, 0.65)',
+                        boxShadow: '0 2px 10px rgba(44, 52, 128, 0.4)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
                 </li>
               );
             })}
           </ul>
 
-          {/* Right actions: Theme Toggle (40px round glass button) & Mobile Menu Button */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Right actions: Theme Toggle & Mobile Menu Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 pl-1 sm:pl-2">
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="w-10 h-10 rounded-full border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.16)] transition-all duration-200 flex-shrink-0 cursor-pointer"
+              className="w-9 h-9 rounded-full border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:text-white hover:bg-[rgba(44,52,128,0.35)] transition-all duration-200 flex-shrink-0 cursor-pointer"
               style={{
                 background: 'rgba(255, 255, 255, 0.04)',
-                boxShadow: '0 0 10px rgba(var(--glow-rgb), 0.15)',
               }}
             >
               <AnimatePresence mode="wait">
@@ -186,12 +180,20 @@ export default function Navbar() {
                   className="flex items-center justify-center"
                 >
                   {theme === 'dark' ? (
-                    <svg className="w-[18px] h-[18px] text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 8a4 4 0 100 8 4 4 0 000-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+                    <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="5" />
+                      <line x1="12" y1="1" x2="12" y2="3" />
+                      <line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" />
+                      <line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                     </svg>
                   ) : (
-                    <svg className="w-[18px] h-[18px] text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                     </svg>
                   )}
                 </motion.div>
@@ -202,29 +204,29 @@ export default function Navbar() {
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle navigation menu"
-              className="min-[860px]:hidden w-10 h-10 rounded-full border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(var(--glow-rgb),0.16)] transition-colors cursor-pointer"
+              className="min-[860px]:hidden w-9 h-9 rounded-full border border-[var(--hair)] flex items-center justify-center text-[var(--ink)] hover:bg-[rgba(44,52,128,0.35)] transition-colors cursor-pointer"
             >
-              {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
+              {mobileMenuOpen ? <IconX size={18} /> : <IconMenu size={18} />}
             </button>
           </div>
         </nav>
       </div>
 
-      {/* Mobile Menu Dropdown / Full-width Sheet (<860px) with 48px tap targets */}
+      {/* Mobile Menu Dropdown (<860px) */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="min-[860px]:hidden max-w-[1120px] mx-auto mt-2 rounded-[16px] border border-[var(--hair)] overflow-hidden shadow-2xl"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="min-[860px]:hidden max-w-sm mx-auto mt-2 rounded-2xl border border-[var(--hair)] overflow-hidden shadow-2xl"
             style={{
               background: 'var(--bg2)',
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
             }}
           >
-            <div className="p-3 flex flex-col gap-1.5">
+            <div className="p-3 flex flex-col gap-1">
               {visibleLinks.map((link) => {
                 const isActive =
                   location.pathname === '/'
@@ -235,11 +237,10 @@ export default function Navbar() {
                     key={link.path}
                     href={location.pathname === '/' ? link.path : `/${link.path}`}
                     onClick={(e) => handleNavClick(e, link.path)}
-                    className="no-underline flex items-center min-h-[48px] px-4 rounded-[10px] text-[15px] font-body font-medium transition-all"
+                    className="no-underline flex items-center min-h-[44px] px-4 rounded-xl text-[14px] font-body font-medium transition-all"
                     style={{
                       color: isActive ? '#ffffff' : 'var(--ink2)',
-                      background: isActive ? 'rgba(44, 52, 128, 0.4)' : 'transparent',
-                      border: isActive ? '1px solid var(--amber)' : '1px solid transparent',
+                      background: isActive ? 'rgba(44, 52, 128, 0.65)' : 'transparent',
                     }}
                   >
                     {link.label}

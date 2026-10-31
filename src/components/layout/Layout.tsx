@@ -123,7 +123,7 @@ export default function Layout() {
       </AnimatePresence>
 
       {/* Global Footer */}
-      <footer className="py-12 pb-24 text-center text-[var(--ink2)] text-xs font-mono max-w-[1120px] mx-auto px-4 border-t border-[var(--hair)] mt-16">
+      <footer className="py-12 pb-24 text-center text-[var(--ink2)] text-xs font-mono max-w-[min(1380px,94vw)] mx-auto px-4 border-t border-[var(--hair)] mt-16">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <span>MANTHAN PATEL · HUBBALLI, KARNATAKA</span>

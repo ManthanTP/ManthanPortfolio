@@ -68,7 +68,7 @@ export default function Contact() {
   const showPhone = settings.show_phone === 'true';
 
   return (
-    <div className="section-container pt-20 pb-28">
+    <div className="section-container sec py-16 sm:py-24">
       {/* Toast Alert */}
       {toastMessage && (
         <div
@@ -229,7 +229,7 @@ export default function Contact() {
         <ScrollReveal delay={0.08}>
           <div className="loc">
             {/* Location Info */}
-            <div className="card locinfo">
+            <div className="card locinfo p-6 sm:p-8 flex flex-col justify-between min-h-[400px]">
               <div>
                 <span className="eyebrow">Base</span>
                 <div className="big font-black uppercase text-3xl sm:text-5xl text-[var(--ink)] mt-2">Hubballi, India</div>
@@ -238,8 +238,8 @@ export default function Contact() {
                 </p>
               </div>
 
-              <div>
-                <div className="grid grid-cols-2 gap-4 text-xs font-mono uppercase text-[var(--ink2)] mb-5">
+              <div className="mt-6 pt-4">
+                <div className="grid grid-cols-2 gap-3 text-xs font-mono uppercase text-[var(--ink2)] mb-5">
                   <div className="p-3 rounded-lg border border-[var(--hair)] bg-[rgba(var(--glow-rgb),0.04)]">
                     <span className="opacity-60 block text-[10px] tracking-wider mb-0.5">Zone</span>
                     <b className="text-[var(--ink)] text-sm">IST · UTC+5:30</b>
@@ -254,7 +254,7 @@ export default function Contact() {
                   href="https://maps.google.com/?q=Hubballi,Karnataka"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn primary h-[46px] px-6 whitespace-nowrap"
+                  className="btn primary inline-flex items-center justify-center gap-2 h-11 px-6 rounded-xl font-mono text-xs uppercase tracking-wider cursor-pointer transition-all hover:scale-[1.02]"
                 >
                   Open in Maps
                   <svg className="w-4 h-4 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

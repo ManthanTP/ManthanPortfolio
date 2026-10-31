@@ -212,8 +212,8 @@ export default function Home() {
       </section>
 
       {/* ─── Hero Stat Cards OUTSIDE overflow-hidden container with full padding & glow ─── */}
-      <div className="section-container pt-10 sm:pt-12 pb-6">
-        <div className="stats grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="section-container pt-10 sm:pt-14 pb-16 sm:pb-24">
+        <div className="stats grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map((stat) => (
             <div key={stat.label} className="card stat min-h-[110px] flex flex-col justify-center">
               <b className="stat-num text-3xl sm:text-[46px] lg:text-[52px]">
@@ -225,31 +225,31 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ─── Preserved Section IDs with Consistent Rhythm & Dividers ─── */}
-      <div className="section-divider" />
-      <div id="about"><About /></div>
-      <div className="section-divider" />
-      <div id="projects"><Projects /></div>
-      <div className="section-divider" />
-      <div id="skills"><Skills /></div>
-      <div className="section-divider" />
-      <div id="experience"><Experience /></div>
-      <div className="section-divider" />
-      <div id="gallery"><Gallery /></div>
+      {/* ─── Preserved Section IDs with Consistent Rhythm & Generous Dividers ─── */}
+      <div className="section-divider my-16 sm:my-20" />
+      <div id="about" className="scroll-mt-28"><About /></div>
+      <div className="section-divider my-16 sm:my-20" />
+      <div id="projects" className="scroll-mt-28"><Projects /></div>
+      <div className="section-divider my-16 sm:my-20" />
+      <div id="skills" className="scroll-mt-28"><Skills /></div>
+      <div className="section-divider my-16 sm:my-20" />
+      <div id="experience" className="scroll-mt-28"><Experience /></div>
+      <div className="section-divider my-16 sm:my-20" />
+      <div id="gallery" className="scroll-mt-28"><Gallery /></div>
       {showBlogSection && (
         <>
-          <div className="section-divider" />
-          <div id="blog"><Blog /></div>
+          <div className="section-divider my-16 sm:my-20" />
+          <div id="blog" className="scroll-mt-28"><Blog /></div>
         </>
       )}
       {settings.show_resume_section !== 'false' && (
         <>
-          <div className="section-divider" />
-          <div id="resume"><Resume /></div>
+          <div className="section-divider my-16 sm:my-20" />
+          <div id="resume" className="scroll-mt-28"><Resume /></div>
         </>
       )}
-      <div className="section-divider" />
-      <div id="contact"><Contact /></div>
+      <div className="section-divider my-16 sm:my-20" />
+      <div id="contact" className="scroll-mt-28"><Contact /></div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import type { GalleryItem } from '../../lib/supabase';
 import { IconChevronLeft, IconChevronRight } from '../ui/Icons';
+import type { GalleryItem } from '../../lib/supabase';
 
 interface HeroCarouselProps {
   items: GalleryItem[];
@@ -13,70 +13,45 @@ interface HeroCarouselProps {
 export default function HeroCarousel({
   items,
   activeCategory,
-  onCategoryChange,
-  categories,
+  onCategoryChange: _onCategoryChange,
+  categories: _categories,
 }: HeroCarouselProps) {
   const shouldReduceMotion = useReducedMotion();
-
-  // Filter items by category
-  const filteredItems = useMemo(() => {
-    if (activeCategory === 'All') return items;
-    return items.filter((item) => item.category === activeCategory);
-  }, [items, activeCategory]);
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const thumbnailStripRef = useRef<HTMLDivElement>(null);
 
-  // Keyboard navigation for lightbox
-  useEffect(() => {
-    if (!isLightboxOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsLightboxOpen(false);
-      if (e.key === 'ArrowRight') goToNext();
-      if (e.key === 'ArrowLeft') goToPrev();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLightboxOpen]);
+  // Filter items by active category
+  const filteredItems = items.filter((item) => {
+    if (activeCategory.toLowerCase() === 'all') return true;
+    return item.category?.toLowerCase() === activeCategory.toLowerCase();
+  });
 
-  // Clamping and resetting when filter changes
+  // Reset index when filter changes
   useEffect(() => {
     setCurrentIndex(0);
     setSubIndex(0);
   }, [activeCategory]);
 
   const safeIndex = Math.min(currentIndex, Math.max(0, filteredItems.length - 1));
-  const activeItem: GalleryItem | undefined = filteredItems[safeIndex];
+  const activeItem = filteredItems[safeIndex];
 
-  // Comma-separated media urls
-  const currentUrls = useMemo(() => {
-    if (!activeItem?.image_url) return [];
-    return activeItem.image_url
-      .split(',')
-      .map((u) => u.trim())
-      .filter(Boolean);
-  }, [activeItem]);
+  // Comma-separated multi-image parsing
+  const currentUrls = (activeItem?.image_url || '')
+    .split(',')
+    .map((u: string) => u.trim())
+    .filter(Boolean);
 
-  // Current active media URL
   const activeMediaUrl = currentUrls[subIndex] || currentUrls[0] || '';
-  const isVideo = useMemo(() => {
-    return /\.(mp4|webm|ogg)$/i.test((activeMediaUrl || '').split('?')[0]);
-  }, [activeMediaUrl]);
+  const isVideo = /\.(mp4|webm|ogg)$/i.test(activeMediaUrl.split('?')[0]);
 
-  // Decoding & zero black-flash state:
-  // displayUrl holds the currently rendered and verified image so the previous photo
-  // stays visible until the next one finishes decoding.
-  const [displayUrl, setDisplayUrl] = useState<string>(activeMediaUrl);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const decodeReqId = useRef(0);
+  // Handle active slide changed & preloading
+  const [displayUrl, setDisplayUrl] = useState(activeMediaUrl);
 
   useEffect(() => {
-    if (!activeMediaUrl) {
-      setDisplayUrl('');
-      setIsLoading(false);
-      return;
-    }
+    if (!activeMediaUrl) return;
 
     if (isVideo) {
       setDisplayUrl(activeMediaUrl);
@@ -84,84 +59,40 @@ export default function HeroCarousel({
       return;
     }
 
-    // If displayUrl is empty or already matches activeMediaUrl, update immediately
-    if (!displayUrl) {
-      setDisplayUrl(activeMediaUrl);
-    }
-    if (displayUrl === activeMediaUrl) {
-      setIsLoading(false);
-      return;
-    }
-
-    const currentReq = ++decodeReqId.current;
     setIsLoading(true);
-
-    const timer = setTimeout(() => {
-      if (currentReq === decodeReqId.current) {
-        setDisplayUrl(activeMediaUrl);
-        setIsLoading(false);
-      }
-    }, 1800);
-
     const img = new Image();
     img.src = activeMediaUrl;
-
-    img
-      .decode()
-      .then(() => {
-        clearTimeout(timer);
-        if (currentReq === decodeReqId.current) {
-          setDisplayUrl(activeMediaUrl);
-          setIsLoading(false);
-        }
-      })
-      .catch(() => {
-        clearTimeout(timer);
-        if (currentReq === decodeReqId.current) {
-          setDisplayUrl(activeMediaUrl);
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      clearTimeout(timer);
+    img.onload = () => {
+      setDisplayUrl(activeMediaUrl);
+      setIsLoading(false);
     };
-  }, [activeMediaUrl, isVideo, displayUrl]);
+    img.onerror = () => {
+      setDisplayUrl(activeMediaUrl);
+      setIsLoading(false);
+    };
 
-  // Preload previous and next photos
-  useEffect(() => {
-    if (filteredItems.length <= 1) return;
-
-    const prevIndex = (currentIndex - 1 + filteredItems.length) % filteredItems.length;
-    const nextIndex = (currentIndex + 1) % filteredItems.length;
-
-    [filteredItems[prevIndex], filteredItems[nextIndex]].forEach((item) => {
-      if (!item) return;
-      const firstUrl = (item.image_url || '').split(',')[0]?.trim();
-      if (firstUrl && !/\.(mp4|webm|ogg)$/i.test(firstUrl.split('?')[0])) {
-        const pre = new Image();
-        pre.src = firstUrl;
+    // Preload next image
+    if (filteredItems.length > 1) {
+      const nextIdx = (safeIndex + 1) % filteredItems.length;
+      const nextItem = filteredItems[nextIdx];
+      const nextUrl = (nextItem?.image_url || '').split(',')[0]?.trim();
+      if (nextUrl && !/\.(mp4|webm|ogg)$/i.test(nextUrl.split('?')[0])) {
+        const nextImg = new Image();
+        nextImg.src = nextUrl;
       }
-    });
-  }, [currentIndex, filteredItems]);
-
-  // Thumbnail strip scrolling ref
-  const thumbnailStripRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const container = thumbnailStripRef.current;
-    if (!container) return;
-    const activeThumb = container.children[currentIndex] as HTMLElement | undefined;
-    if (activeThumb) {
-      const left = activeThumb.offsetLeft - (container.clientWidth / 2) + (activeThumb.clientWidth / 2);
-      container.scrollTo({ left, behavior: 'smooth' });
     }
-  }, [currentIndex]);
 
-  const goToPrev = useCallback(() => {
-    if (filteredItems.length === 0) return;
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : filteredItems.length - 1));
-    setSubIndex(0);
-  }, [filteredItems.length]);
+    // Preload previous image
+    if (filteredItems.length > 1) {
+      const prevIdx = (safeIndex - 1 + filteredItems.length) % filteredItems.length;
+      const prevItem = filteredItems[prevIdx];
+      const prevUrl = (prevItem?.image_url || '').split(',')[0]?.trim();
+      if (prevUrl && !/\.(mp4|webm|ogg)$/i.test(prevUrl.split('?')[0])) {
+        const prevImg = new Image();
+        prevImg.src = prevUrl;
+      }
+    }
+  }, [activeMediaUrl, isVideo, safeIndex, filteredItems]);
 
   const goToNext = useCallback(() => {
     if (filteredItems.length === 0) return;
@@ -169,23 +100,46 @@ export default function HeroCarousel({
     setSubIndex(0);
   }, [filteredItems.length]);
 
-  // Keyboard navigation (ArrowLeft / ArrowRight)
+  const goToPrev = useCallback(() => {
+    if (filteredItems.length === 0) return;
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : filteredItems.length - 1));
+    setSubIndex(0);
+  }, [filteredItems.length]);
+
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+      if (isLightboxOpen) {
+        if (e.key === 'Escape') setIsLightboxOpen(false);
+        if (e.key === 'ArrowRight') goToNext();
+        if (e.key === 'ArrowLeft') goToPrev();
         return;
       }
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        goToPrev();
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        goToNext();
+
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
       }
+
+      if (e.key === 'ArrowRight') goToNext();
+      if (e.key === 'ArrowLeft') goToPrev();
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToPrev, goToNext]);
+  }, [goToNext, goToPrev, isLightboxOpen]);
+
+  // Scroll active thumbnail into view
+  useEffect(() => {
+    if (!thumbnailStripRef.current) return;
+    const activeThumb = thumbnailStripRef.current.children[safeIndex] as HTMLElement;
+    if (activeThumb) {
+      activeThumb.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+    }
+  }, [safeIndex]);
 
   // Sub-gallery navigation for comma-separated items
   const nextSubImage = (e?: React.MouseEvent) => {
@@ -202,13 +156,13 @@ export default function HeroCarousel({
 
   if (filteredItems.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
-        <p className="font-heading">No gallery items found in this category.</p>
+      <div className="card py-16 text-center text-[var(--ink2)] font-mono text-sm">
+        No gallery items found in this category.
       </div>
     );
   }
 
-  // Credit formatting (e.g. "BY GCL MEDIA TEAM.")
+  // Credit formatting
   const formattedCredit = activeItem?.credit?.trim()
     ? activeItem.credit.trim().toUpperCase().startsWith('BY ')
       ? activeItem.credit.trim().toUpperCase()
@@ -216,107 +170,23 @@ export default function HeroCarousel({
     : null;
 
   return (
-    <div
-      className="hero-carousel-root"
-      style={{
-        position: 'relative',
-        width: '100%',
-        margin: '0 auto',
-        maxWidth: 1300,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Category filter chips */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          marginBottom: 32,
-        }}
-      >
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            className={`chip ${activeCategory === cat ? 'active' : ''}`}
-            onClick={() => onCategoryChange(cat)}
-            style={{
-              padding: '8px 18px',
-              borderRadius: 20,
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Main Carousel Stage with Natural Backdrop */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          borderRadius: 20,
-          overflow: 'hidden',
-          backgroundColor: 'var(--bg-secondary)',
-          border: '1px solid var(--border-color)',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
-        }}
-      >
-        {/* Natural Photo as Backdrop (NO color tint) */}
+    <div className="w-full relative select-none">
+      {/* ─── Main Cinematic Photo Stage (matching GCL style) ─── */}
+      <div className="relative w-full rounded-2xl overflow-hidden border border-[var(--hair)] bg-[var(--bg2)] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+        {/* Natural Photo Backdrop blur for ambient glow */}
         {displayUrl && !isVideo && (
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: -20,
-              overflow: 'hidden',
-              pointerEvents: 'none',
-              zIndex: 0,
-            }}
-          >
+          <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none z-0">
             <img
               src={displayUrl}
               alt=""
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                filter: 'blur(45px) saturate(1.2)',
-                opacity: 0.26,
-                transform: 'scale(1.15)',
-              }}
-            />
-            {/* Soft edge fade into container background */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background:
-                  'radial-gradient(ellipse at center, transparent 30%, var(--bg-secondary) 95%)',
-              }}
+              className="w-full h-full object-cover blur-2xl opacity-20 scale-110"
             />
           </div>
         )}
 
-        {/* Foreground Content Frame */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            width: '100%',
-            minHeight: 'min(72vh, 600px)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {/* Framer motion interactive swipe area */}
+        {/* Cinematic Stage Area */}
+        <div className="relative z-10 w-full h-[360px] sm:h-[480px] lg:h-[560px] flex items-center justify-center overflow-hidden">
+          {/* Swipeable drag container */}
           <motion.div
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
@@ -329,305 +199,127 @@ export default function HeroCarousel({
                 goToNext();
               }
             }}
-            style={{
-              position: 'relative',
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px 20px 16px 20px',
-              cursor: 'grab',
-              touchAction: 'pan-y',
-            }}
-            whileTap={{ cursor: 'grabbing' }}
+            onClick={() => setIsLightboxOpen(true)}
+            className="w-full h-full flex items-center justify-center cursor-zoom-in relative"
           >
-            {/* Large Active Photo / Video container */}
-            <div
-              onClick={() => setIsLightboxOpen(true)}
-              style={{
-                position: 'relative',
-                maxWidth: '100%',
-                maxHeight: 'min(58vh, 520px)',
-                width: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 14,
-                overflow: 'hidden',
-                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.45)',
-                cursor: 'zoom-in',
-              }}
-            >
-              {/* Loading Shimmer / Skeleton */}
-              {isLoading && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 3,
-                    background:
-                      'linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.03) 100%)',
-                    backgroundSize: '200% 100%',
-                    animation: 'shimmer 1.5s infinite linear',
-                    backdropFilter: 'blur(4px)',
-                    borderRadius: 14,
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
+            {/* Loading Shimmer */}
+            {isLoading && (
+              <div className="absolute inset-0 z-20 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse" />
+            )}
 
-              {/* Media rendering with smooth crossfade */}
-              {isVideo ? (
-                <video
-                  key={activeMediaUrl}
-                  src={activeMediaUrl}
-                  controls
-                  playsInline
-                  autoPlay={false}
-                  preload="metadata"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: 'min(58vh, 520px)',
-                    display: 'block',
-                    borderRadius: 14,
-                    outline: 'none',
-                    backgroundColor: '#000',
-                  }}
+            {/* Main Media Rendering */}
+            {isVideo ? (
+              <video
+                key={activeMediaUrl}
+                src={activeMediaUrl}
+                controls
+                playsInline
+                autoPlay={false}
+                className="w-full h-full object-contain bg-black"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <AnimatePresence mode="sync">
+                <motion.img
+                  key={displayUrl || activeMediaUrl}
+                  src={displayUrl || activeMediaUrl}
+                  alt={activeItem?.title || 'Gallery photograph'}
+                  initial={{ opacity: shouldReduceMotion ? 1 : 0.4 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: shouldReduceMotion ? 1 : 0.4 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.35, ease: 'easeInOut' }}
+                  draggable={false}
+                  className="w-full h-full object-cover sm:object-contain select-none"
                 />
-              ) : (
-                <AnimatePresence mode="sync">
-                  <motion.img
-                    key={displayUrl || activeMediaUrl}
-                    src={displayUrl || activeMediaUrl}
-                    alt={activeItem?.title || 'Gallery item'}
-                    initial={{ opacity: shouldReduceMotion ? 1 : 0.4 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: shouldReduceMotion ? 1 : 0.4 }}
-                    transition={{ duration: shouldReduceMotion ? 0 : 0.35, ease: 'easeInOut' }}
-                    draggable={false}
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: 'min(58vh, 520px)',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
-                      display: 'block',
-                      borderRadius: 14,
-                      userSelect: 'none',
-                    }}
-                  />
-                </AnimatePresence>
-              )}
+              </AnimatePresence>
+            )}
 
-              {/* Sub-gallery "1/N" Badge & controls if multiple images */}
-              {currentUrls.length > 1 && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: 14,
-                    right: 14,
-                    zIndex: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: 'rgba(0, 0, 0, 0.72)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    padding: '4px 10px',
-                    borderRadius: 20,
-                    color: '#fff',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                    userSelect: 'none',
-                  }}
-                  onClick={(e) => e.stopPropagation()}
+            {/* Dark gradient overlay at bottom for bold text contrast (GCL style) */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
+
+            {/* Sub-gallery "1/N" Badge if multiple images */}
+            {currentUrls.length > 1 && (
+              <div
+                className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white text-xs font-mono font-semibold shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={prevSubImage}
+                  aria-label="Previous sub-image"
+                  className="p-1 hover:text-[var(--amber)] transition-colors cursor-pointer"
                 >
-                  <button
-                    onClick={prevSubImage}
-                    aria-label="Previous sub-image"
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: 2,
-                    }}
-                  >
-                    <IconChevronLeft size={14} />
-                  </button>
-                  <span style={{ minWidth: 32, textAlign: 'center' }}>
-                    {subIndex + 1} / {currentUrls.length}
-                  </span>
-                  <button
-                    onClick={nextSubImage}
-                    aria-label="Next sub-image"
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: 2,
-                    }}
-                  >
-                    <IconChevronRight size={14} />
-                  </button>
+                  <IconChevronLeft size={14} />
+                </button>
+                <span>
+                  {subIndex + 1} / {currentUrls.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={nextSubImage}
+                  aria-label="Next sub-image"
+                  className="p-1 hover:text-[var(--amber)] transition-colors cursor-pointer"
+                >
+                  <IconChevronRight size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Bold Headline Overlay on Photo (GCL Reference style) */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 z-20 flex flex-col sm:flex-row sm:items-end justify-between gap-4 pointer-events-none">
+              <div className="max-w-2xl">
+                {formattedCredit && (
+                  <div className="font-mono text-xs tracking-widest uppercase text-[#7686f0] font-semibold mb-1">
+                    {formattedCredit}
+                  </div>
+                )}
+                {activeItem?.title && (
+                  <h3 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl text-white uppercase tracking-wide leading-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
+                    {activeItem.title}
+                  </h3>
+                )}
+                {activeItem?.description && (
+                  <p className="font-body text-xs sm:text-sm text-gray-300 mt-2 max-w-xl line-clamp-2 drop-shadow">
+                    {activeItem.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Right Tag / Category */}
+              {activeItem?.category && (
+                <div className="font-mono text-xs uppercase tracking-wider text-gray-400 font-semibold self-start sm:self-end bg-black/50 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
+                  {activeItem.category}
                 </div>
               )}
             </div>
           </motion.div>
 
-          {/* Prev/Next floating buttons */}
+          {/* Previous / Next Floating Arrows */}
           <button
+            type="button"
             onClick={goToPrev}
-            aria-label="Previous slide"
-            style={{
-              position: 'absolute',
-              left: 16,
-              top: '46%',
-              transform: 'translateY(-50%)',
-              zIndex: 5,
-              width: 46,
-              height: 46,
-              borderRadius: '50%',
-              background: 'var(--glass-bg)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
-              e.currentTarget.style.borderColor = 'var(--accent-violet)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-              e.currentTarget.style.borderColor = 'var(--border-color)';
-            }}
+            aria-label="Previous image"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-[#2C3480] text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition-all duration-200 cursor-pointer shadow-lg hover:scale-105"
           >
-            <IconChevronLeft size={24} />
+            <IconChevronLeft size={22} />
           </button>
-
           <button
+            type="button"
             onClick={goToNext}
-            aria-label="Next slide"
-            style={{
-              position: 'absolute',
-              right: 16,
-              top: '46%',
-              transform: 'translateY(-50%)',
-              zIndex: 5,
-              width: 46,
-              height: 46,
-              borderRadius: '50%',
-              background: 'var(--glass-bg)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
-              e.currentTarget.style.borderColor = 'var(--accent-violet)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-              e.currentTarget.style.borderColor = 'var(--border-color)';
-            }}
+            aria-label="Next image"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-[#2C3480] text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition-all duration-200 cursor-pointer shadow-lg hover:scale-105"
           >
-            <IconChevronRight size={24} />
+            <IconChevronRight size={22} />
           </button>
-
-          {/* Photo Metadata Display: Title, "By" credit, Description */}
-          {activeItem && (activeItem.title || formattedCredit || activeItem.description) && (
-            <div
-              style={{
-                width: '100%',
-                padding: '14px 28px 20px',
-                textAlign: 'center',
-                zIndex: 2,
-              }}
-            >
-              {activeItem.title && activeItem.title.trim() && (
-                <h3
-                  className="font-hero"
-                  style={{
-                    fontSize: 'clamp(1.1rem, 2.4vw, 1.45rem)',
-                    fontWeight: 800,
-                    letterSpacing: '0.04em',
-                    color: 'var(--text-primary)',
-                    marginBottom: 4,
-                  }}
-                >
-                  {activeItem.title}
-                </h3>
-              )}
-
-              {formattedCredit && (
-                <div
-                  className="font-mono"
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    color: 'var(--accent-cyan)',
-                    marginBottom: activeItem.description ? 6 : 0,
-                  }}
-                >
-                  {formattedCredit}
-                </div>
-              )}
-
-              {activeItem.description && activeItem.description.trim() && (
-                <p
-                  className="font-body"
-                  style={{
-                    fontSize: '0.9rem',
-                    color: 'var(--text-secondary)',
-                    maxWidth: 720,
-                    margin: '0 auto',
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {activeItem.description.trim()}
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Filmstrip Thumbnail Strip */}
-      <div
-        style={{
-          marginTop: 20,
-          position: 'relative',
-        }}
-      >
+      {/* ─── Filmstrip Thumbnail Row (matching GCL style) ─── */}
+      <div className="mt-4 w-full">
         <div
           ref={thumbnailStripRef}
-          style={{
-            display: 'flex',
-            gap: 12,
-            overflowX: 'auto',
-            padding: '8px 4px 14px 4px',
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'thin',
-          }}
+          className="flex items-center gap-3 overflow-x-auto py-2 px-1 scroll-smooth no-scrollbar"
+          style={{ scrollSnapType: 'x mandatory' }}
         >
           {filteredItems.map((item, index) => {
             const firstUrl = (item.image_url || '').split(',')[0]?.trim() || '';
@@ -638,82 +330,38 @@ export default function HeroCarousel({
             return (
               <button
                 key={item.id || index}
+                type="button"
                 onClick={() => {
                   setCurrentIndex(index);
                   setSubIndex(0);
                 }}
-                aria-label={`Go to slide ${index + 1}: ${item.title || 'Photo'}`}
-                style={{
-                  position: 'relative',
-                  flex: '0 0 auto',
-                  width: 'clamp(84px, 12vw, 120px)',
-                  aspectRatio: '16/10',
-                  borderRadius: 10,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  border: isActive
-                    ? '2px solid var(--accent-violet)'
-                    : '1px solid var(--border-color)',
-                  background: 'var(--bg-secondary)',
-                  padding: 0,
-                  opacity: isActive ? 1 : 0.62,
-                  transform: isActive ? 'scale(1.04)' : 'scale(1)',
-                  transition: 'all 0.22s ease',
-                  scrollSnapAlign: 'center',
-                  outline: 'none',
-                }}
+                aria-label={`Select photo ${index + 1}: ${item.title || 'Photo'}`}
+                className={`relative flex-shrink-0 w-24 sm:w-32 aspect-[16/10] rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer ${
+                  isActive
+                    ? 'border-[#7686f0] ring-2 ring-[#7686f0]/50 scale-105 opacity-100 shadow-[0_4px_16px_rgba(44,52,128,0.5)]'
+                    : 'border-[var(--hair)] opacity-60 hover:opacity-90 hover:border-white/40'
+                }`}
+                style={{ scrollSnapAlign: 'center' }}
               >
                 {isThumbVideo ? (
                   <video
                     src={firstUrl}
                     muted
                     playsInline
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <img
                     src={firstUrl}
                     alt={item.title || 'Thumbnail'}
                     loading="lazy"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    className="w-full h-full object-cover"
                   />
                 )}
 
-                {/* Sub-gallery count indicator on thumbnail */}
                 {extraCount > 0 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      background: 'rgba(0, 0, 0, 0.75)',
-                      borderRadius: 4,
-                      padding: '1px 5px',
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      color: 'var(--accent-cyan)',
-                    }}
-                  >
+                  <div className="absolute top-1 right-1 bg-black/80 text-[10px] font-mono font-bold text-[#7686f0] px-1.5 py-0.5 rounded">
                     +{extraCount}
-                  </div>
-                )}
-
-                {/* Video icon on thumbnail */}
-                {isThumbVideo && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 4,
-                      left: 4,
-                      background: 'rgba(0, 0, 0, 0.75)',
-                      borderRadius: 4,
-                      padding: '1px 5px',
-                      fontSize: '0.62rem',
-                      fontWeight: 600,
-                      color: '#fff',
-                    }}
-                  >
-                    VIDEO
                   </div>
                 )}
               </button>
@@ -722,7 +370,7 @@ export default function HeroCarousel({
         </div>
       </div>
 
-      {/* Fullscreen Lightbox Modal */}
+      {/* ─── Fullscreen Lightbox Modal ─── */}
       <AnimatePresence>
         {isLightboxOpen && (
           <motion.div
@@ -731,58 +379,29 @@ export default function HeroCarousel({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={() => setIsLightboxOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 100,
-              background: 'rgba(3, 4, 9, 0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '24px',
-              cursor: 'zoom-out',
-            }}
+            className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 sm:p-8 cursor-zoom-out"
           >
             {/* Top Close Button & Counter */}
             <div
-              style={{
-                position: 'absolute',
-                top: 20,
-                left: 24,
-                right: 24,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                zIndex: 101,
-              }}
+              className="absolute top-6 left-6 right-6 flex items-center justify-between z-50 pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <span className="font-mono text-sm tracking-wider uppercase text-[var(--ink2)]">
+              <span className="font-mono text-sm tracking-wider uppercase text-gray-400">
                 {String(safeIndex + 1).padStart(2, '0')} / {String(filteredItems.length).padStart(2, '0')}
               </span>
               <button
                 type="button"
                 onClick={() => setIsLightboxOpen(false)}
-                className="w-10 h-10 rounded-full border border-[var(--hair)] flex items-center justify-center text-white bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.15)] transition-colors cursor-pointer"
+                className="w-10 h-10 rounded-full border border-white/20 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close fullscreen view"
               >
                 ✕
               </button>
             </div>
 
-            {/* Lightbox Media */}
+            {/* Media */}
             <div
-              style={{
-                position: 'relative',
-                maxWidth: '90vw',
-                maxHeight: '80vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              className="relative max-w-6xl max-h-[80vh] flex items-center justify-center cursor-default pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {isVideo ? (
@@ -790,25 +409,13 @@ export default function HeroCarousel({
                   src={activeMediaUrl}
                   controls
                   autoPlay
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '80vh',
-                    borderRadius: 12,
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
-                  }}
+                  className="max-h-[80vh] rounded-xl shadow-2xl"
                 />
               ) : (
                 <img
                   src={displayUrl || activeMediaUrl}
                   alt={activeItem?.title || 'Fullscreen photo'}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '80vh',
-                    objectFit: 'contain',
-                    borderRadius: 12,
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
-                    cursor: 'default',
-                  }}
+                  className="max-h-[80vh] object-contain rounded-xl shadow-2xl"
                 />
               )}
             </div>
@@ -816,44 +423,24 @@ export default function HeroCarousel({
             {/* Lightbox Caption */}
             {activeItem && (activeItem.title || activeItem.description) && (
               <div
-                style={{
-                  position: 'absolute',
-                  bottom: 24,
-                  textAlign: 'center',
-                  maxWidth: 600,
-                  padding: '0 16px',
-                  zIndex: 101,
-                }}
+                className="absolute bottom-6 text-center max-w-xl px-4 pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {activeItem.title && (
-                  <div className="font-display text-xl sm:text-2xl font-black uppercase text-white tracking-wide">
+                  <h4 className="font-display font-black text-2xl uppercase text-white tracking-wide">
                     {activeItem.title}
-                  </div>
-                )}
-                {formattedCredit && (
-                  <div className="font-mono text-xs tracking-wider uppercase text-[var(--amber)] mt-1">
-                    {formattedCredit}
-                  </div>
+                  </h4>
                 )}
                 {activeItem.description && (
-                  <div className="font-body text-sm text-[var(--ink2)] mt-1">
+                  <p className="font-body text-sm text-gray-400 mt-1">
                     {activeItem.description}
-                  </div>
+                  </p>
                 )}
               </div>
             )}
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Shimmer animation keyframe style */}
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -6,8 +6,6 @@ import { api } from '../lib/api';
 import type { Project } from '../lib/supabase';
 import { DEMO_PROJECTS } from '../lib/data';
 
-const CATEGORIES = ['All', 'AI', 'Full Stack', 'Web'];
-
 export default function Projects() {
   const [activeFilter, setActiveFilter] = useState('All');
   const storeProjects = useDataStore((s) => s.projects);
@@ -26,14 +24,48 @@ export default function Projects() {
 
   const allProjects = storeProjects.length > 0 ? storeProjects : DEMO_PROJECTS;
 
-  // Filter projects by category
+  // Build dynamic categories from real projects with user preferred defaults
+  const categories = useMemo(() => {
+    const defaults = ['All', 'AI', 'Full Stack', 'Web'];
+    allProjects.forEach((p) => {
+      if (Array.isArray(p.category)) {
+        p.category.forEach((c) => {
+          const t = c.trim();
+          if (t && !defaults.some((d) => d.toLowerCase() === t.toLowerCase())) {
+            defaults.push(t);
+          }
+        });
+      }
+    });
+    return defaults;
+  }, [allProjects]);
+
+  // Filter projects by category with intelligent matching so it NEVER breaks
   const filtered = useMemo(() => {
-    if (activeFilter === 'All') return allProjects;
-    return allProjects.filter((p) =>
-      p.category
-        ? p.category.some((c) => c.toLowerCase().includes(activeFilter.toLowerCase()))
-        : false
-    );
+    if (activeFilter.toLowerCase() === 'all') return allProjects;
+    const fLower = activeFilter.toLowerCase();
+    const res = allProjects.filter((p) => {
+      const cats = Array.isArray(p.category) ? p.category.map((c) => c.toLowerCase()) : [];
+      const techs = Array.isArray(p.tech_stack) ? p.tech_stack.map((t) => t.name.toLowerCase()) : [];
+
+      if (fLower === 'full stack') {
+        return (
+          cats.some((c) => c.includes('full') || c.includes('web') || c.includes('dash')) ||
+          techs.some((t) => ['react', 'node', 'supabase', 'postgresql'].includes(t))
+        );
+      }
+      if (fLower === 'web') {
+        return cats.some((c) => c.includes('web')) || techs.some((t) => ['react', 'html', 'css', 'vite'].includes(t));
+      }
+      if (fLower === 'ai') {
+        return cats.some((c) => c.includes('ai')) || techs.some((t) => t.includes('ai') || t.includes('claude'));
+      }
+      return (
+        cats.some((c) => c.includes(fLower) || fLower.includes(c)) ||
+        techs.some((t) => t.includes(fLower))
+      );
+    });
+    return res.length > 0 ? res : allProjects;
   }, [activeFilter, allProjects]);
 
   // Reel active index and progress timer
@@ -140,29 +172,29 @@ export default function Projects() {
         ];
 
   return (
-    <div className="section-container sec">
+    <div className="section-container sec pt-10 sm:pt-16 pb-16 sm:pb-24">
       <ScrollReveal>
-        <div className="sh flex flex-col md:flex-row md:items-end justify-between gap-6 mb-9">
+        <div className="sh flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <span className="eyebrow">Selected work</span>
             <h2>PROJECTS</h2>
           </div>
 
           {/* Category Chips right-aligned on baseline matching nav button style */}
-          <div className="flex flex-wrap gap-1.5">
-            {CATEGORIES.map((cat) => {
-              const isActive = activeFilter === cat;
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => {
+              const isActive = activeFilter.toLowerCase() === cat.toLowerCase();
               return (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setActiveFilter(cat)}
-                  className="px-[14px] py-[8px] rounded-[10px] text-[13px] font-body font-medium transition-all duration-200 cursor-pointer"
+                  className="px-4 py-1.5 rounded-full text-xs font-mono tracking-wider uppercase transition-all duration-200 cursor-pointer"
                   style={{
                     color: isActive ? '#ffffff' : 'var(--ink2)',
-                    background: isActive ? 'rgba(44, 52, 128, 0.35)' : 'transparent',
-                    border: isActive ? '1px solid var(--amber)' : '1px solid var(--hair)',
-                    boxShadow: isActive ? '0 0 14px rgba(86, 104, 230, 0.3)' : 'none',
+                    background: isActive ? 'rgba(44, 52, 128, 0.7)' : 'rgba(255, 255, 255, 0.04)',
+                    border: isActive ? '1px solid rgba(118, 134, 240, 0.4)' : '1px solid var(--hair)',
+                    boxShadow: isActive ? '0 2px 10px rgba(44, 52, 128, 0.4)' : 'none',
                   }}
                 >
                   {cat}

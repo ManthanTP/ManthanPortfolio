@@ -47,7 +47,7 @@ export default function Experience() {
   };
 
   return (
-    <div className="section-container sec">
+    <div className="section-container sec pt-10 sm:pt-16 pb-16 sm:pb-24">
       <ScrollReveal>
         <div className="sh">
           <span className="eyebrow">Path so far</span>

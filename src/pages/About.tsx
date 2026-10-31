@@ -195,14 +195,17 @@ export default function About() {
             </p>
           </div>
 
-          {/* Mini Stats Bento (Renders up to 6 user stats with animated counters) */}
-          <div className="mini grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {stats.slice(0, 6).map((st) => (
-              <div key={st.label} className="card p-5">
-                <b className="font-display text-3xl sm:text-4xl font-black text-[var(--amber)]">
+          {/* Mini Stats: All boxes in ONE row with generous padding and centered text */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mt-10 mb-8 w-full">
+            {stats.slice(0, 4).map((st) => (
+              <div
+                key={st.label}
+                className="card p-6 sm:p-7 flex flex-col items-center justify-center text-center rounded-[16px] border border-[var(--hair)] transition-all duration-300 hover:border-[var(--amber)] hover:shadow-[0_10px_30px_rgba(44,52,128,0.25)]"
+              >
+                <b className="font-display text-4xl sm:text-5xl font-black text-[var(--amber)] leading-none">
                   <AnimatedCounter target={st.value} suffix={st.suffix || ''} />
                 </b>
-                <span className="text-xs font-mono tracking-widest uppercase text-[var(--ink2)] mt-1 block">
+                <span className="text-xs font-mono tracking-widest uppercase text-[var(--ink2)] mt-2.5 block">
                   {st.label}
                 </span>
               </div>
@@ -211,9 +214,9 @@ export default function About() {
         </div>
       </ScrollReveal>
 
-      {/* ─── What Drives Me: Stack of Value Screens ─── */}
+      {/* ─── What Drives Me: Stack of Value Screens with generous top & bottom margins ─── */}
       <ScrollReveal delay={0.1}>
-        <div className="vals mt-16">
+        <div className="vals mt-16 sm:mt-24 mb-16 sm:mb-20">
           {/* Left Values List */}
           <div className="vleft">
             <div className="sh mb-6">
